@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>COSMOS — 우주의 진화</title>
+  <style>
+    :root {
+      --bg: #050616;
+      --panel: #0d1130;
+      --text: #e7ecff;
+      --dim: #8c93b8;
+      --accent: #7f4dff;
+      --warn: #ff5a5a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 30%, #11142e 0%, #050616 70%);
+      color: var(--text);
+      font-family: -apple-system, "SF Pro Display", "Pretendard", "Noto Sans KR", sans-serif;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    #app {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 12px;
+    }
+    .stage {
+      position: relative;
+      aspect-ratio: 480 / 720;
+      max-height: calc(100vh - 120px);
+      max-width: 100vw;
+      display: flex;
+      flex-direction: column;
+    }
+    .hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(13,17,48,0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(127,77,255,0.15);
+      border-radius: 12px 12px 0 0;
+      gap: 12px;
+    }
+    .hud .col { display: flex; flex-direction: column; gap: 2px; }
+    .hud .label { font-size: 10px; color: var(--dim); letter-spacing: 0.1em; }
+    .hud .value { font-size: 18px; font-weight: 700; letter-spacing: 0.02em; }
+    .hud .combo {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffe066;
+      opacity: 0;
+      transition: opacity 0.15s;
+      text-shadow: 0 0 8px rgba(255,224,102,0.6);
+    }
+    .hud .next-wrap { display: flex; align-items: center; gap: 8px; }
+    canvas#next {
+      width: 56px;
+      height: 56px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(127,77,255,0.2);
+      border-radius: 10px;
+    }
+    canvas#game {
+      display: block;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      background: #050616;
+      border: 1px solid rgba(127,77,255,0.2);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      touch-action: none;
+      cursor: pointer;
+    }
+    button.bigbang {
+      position: absolute;
+      right: 10px;
+      bottom: 14px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #ff4d6d, #ffa64d);
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 0 24px rgba(255,77,109,0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button.bigbang.show { opacity: 1; pointer-events: auto; }
+    button.bigbang:active { transform: scale(0.95); }
+    button.bigbang:disabled {
+      background: #444;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    #toasts {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .toast {
+      padding: 8px 16px;
+      background: rgba(13,17,48,0.9);
+      border: 1px solid rgba(127,77,255,0.6);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
+      text-shadow: 0 0 8px rgba(127,77,255,0.8);
+    }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { to { opacity: 0; transform: translateY(-8px); } }
+    #gameover {
+      position: absolute;
+      inset: 0;
+      background: rgba(5,6,22,0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      border-radius: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+      z-index: 10;
+    }
+    #gameover.show { opacity: 1; pointer-events: auto; }
+    #gameover h2 {
+      font-size: 32px;
+      letter-spacing: 0.3em;
+      background: linear-gradient(135deg, #7f4dff, #ff4d6d);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    #gameover .row { display: flex; gap: 24px; font-size: 14px; color: var(--dim); }
+    #gameover .row b { display: block; font-size: 24px; color: var(--text); margin-top: 4px; }
+    #gameover button {
+      margin-top: 12px;
+      padding: 12px 28px;
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 999px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 0 24px rgba(127,77,255,0.6);
+    }
+    .credit {
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 0.2em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="stage">
+      <div class="hud">
+        <div class="col">
+          <span class="label">SCORE</span>
+          <span class="value" id="score">0</span>
+        </div>
+        <div class="combo" id="combo"></div>
+        <div class="col" style="align-items: flex-end;">
+          <span class="label">BEST · <span id="best">0</span></span>
+          <div class="next-wrap">
+            <span class="label">NEXT</span>
+            <canvas id="next"></canvas>
+          </div>
+        </div>
+      </div>
+      <canvas id="game"></canvas>
+      <button id="bigbang" class="bigbang">빅뱅 (1)</button>
+      <div id="toasts"></div>
+      <div id="gameover">
+        <h2>COSMOS</h2>
+        <div class="row">
+          <div>SCORE<b id="finalScore">0</b></div>
+          <div>BEST<b id="finalBest">0</b></div>
+        </div>
+        <button id="restart">다시 시작</button>
+      </div>
+    </div>
+    <div class="credit">COSMOS — 우주의 진화를 손바닥 안에서</div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
