@@ -41,7 +41,8 @@ export function runSupernova(world: Matter.World, supernovaBody: Matter.Body, ca
 
   for (const b of affected) {
     if (b.tier == null) continue;
-    const newTier = Math.min(SCATTER_MAX_TIER, b.tier + 1);
+    const bonus = b.tier >= 7 ? 2 : 1;
+    const newTier = Math.min(SCATTER_MAX_TIER, b.tier + bonus);
     const info = tierInfo(newTier);
     const nx = info.radius + 20 + Math.random() * (WIDTH - info.radius * 2 - 40);
     const ny = TOP_LINE_Y + info.radius + 40 + Math.random() * (HEIGHT - TOP_LINE_Y - info.radius * 2 - 80);
