@@ -463,6 +463,7 @@ function restart(): void {
   chargePanel.syncFromCharge();
   resetChargeAttractors();
   applyUnlocks();
+  state.gameStarted = true;
   state.gameOver = false;
   state.topOccupiedTime = 0;
   state.blackholeActive = false;
@@ -530,7 +531,7 @@ function loop(now: number): void {
   popups.draw(canvas!.getContext('2d')!);
   hud.update(score, dropper);
 
-  net.pushScore(score.value, !state.gameOver);
+  net.pushScore(score.value, state.gameStarted && !state.gameOver);
 
   requestAnimationFrame(loop);
 }
