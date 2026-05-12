@@ -130,6 +130,68 @@ export class Synth {
     osc.stop(t0 + 0.5);
   }
 
+  chargeReady(): void {
+    if (!this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const t0 = ctx.currentTime;
+    const notes = [880, 1175, 1568];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t0 + i * 0.06);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t0 + i * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.13, t0 + i * 0.06 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.06 + 0.4);
+      osc.connect(gain).connect(this.master!);
+      osc.start(t0 + i * 0.06);
+      osc.stop(t0 + i * 0.06 + 0.45);
+    });
+  }
+
+  chargeUse(kind: 'charged' | 'slow' | 'attract'): void {
+    if (!this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    const dur = 0.35;
+    if (kind === 'charged') {
+      osc.frequency.setValueAtTime(440, t0);
+      osc.frequency.exponentialRampToValueAtTime(1760, t0 + dur);
+    } else if (kind === 'slow') {
+      osc.frequency.setValueAtTime(880, t0);
+      osc.frequency.exponentialRampToValueAtTime(220, t0 + dur);
+    } else {
+      osc.frequency.setValueAtTime(660, t0);
+      osc.frequency.exponentialRampToValueAtTime(1320, t0 + dur);
+    }
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.16, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(this.master);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.05);
+  }
+
+  slingshot(): void {
+    if (!this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1200, t0);
+    osc.frequency.exponentialRampToValueAtTime(400, t0 + 0.18);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.14, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.2);
+    osc.connect(gain).connect(this.master);
+    osc.start(t0);
+    osc.stop(t0 + 0.22);
+  }
+
   gameover(): void {
     if (!this.ctx || !this.master) return;
     const ctx = this.ctx;
