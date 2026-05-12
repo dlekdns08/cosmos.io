@@ -190,6 +190,8 @@ setupMerge(engine, world, {
       if (!state.bigBangUsedThisGame) {
         maybeChallenge('blackholeNoBigBang', '빅뱅 없이 블랙홀', '#ff4dc4');
       }
+      state.blackholesThisGame += 1;
+      meta.registerBlackhole();
       state.blackholeActive = true;
       shake.add(10);
       synth.blackhole();
@@ -255,7 +257,8 @@ document.addEventListener('keydown', (e) => {
 
 bigBangBtn.addEventListener('click', () => {
   if (!state.bigBangAvailable || state.gameOver || state.blackholeActive) return;
-  state.bigBangAvailable = false;
+  state.bigBangCountThisGame += 1;
+  state.bigBangAvailable = state.bigBangCountThisGame < state.bigBangMaxThisGame;
   state.bigBangUsedThisGame = true;
   state.topOccupiedTime = 0;
   score.countBigBang();
