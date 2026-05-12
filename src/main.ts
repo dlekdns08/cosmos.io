@@ -14,12 +14,20 @@ import { HUD, toast } from './ui/hud.js';
 import { GameOverOverlay } from './ui/gameover.js';
 import { LeaderboardPanel } from './ui/leaderboard.js';
 import { NetClient } from './net/client.js';
+import { applyOrbitForces, markOrbitActive, isOrbitActive } from './game/orbit.js';
+import { runSlingshot, wasJustSlung } from './game/slingshot.js';
+import { CosmicCharge, type ChargeKind } from './game/cosmicCharge.js';
+import { ChargePanel } from './ui/charge.js';
+import { applyChargeAttractors, registerAttractDrop, resetChargeAttractors } from './game/chargeEffects.js';
 
 interface Challenges {
   firstStar: boolean;
   fiveCombo: boolean;
   blackhole: boolean;
   hundredK: boolean;
+  threeSlingshots: boolean;
+  fiveCharges: boolean;
+  blackholeNoBigBang: boolean;
 }
 
 interface GameState {
@@ -27,8 +35,10 @@ interface GameState {
   topOccupiedTime: number;
   blackholeActive: boolean;
   bigBangAvailable: boolean;
+  bigBangUsedThisGame: boolean;
   challenges: Challenges;
   challengeScoreTarget: number;
+  slingshotCount: number;
 }
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
@@ -42,6 +52,15 @@ const shake = new Shake();
 const synth = new Synth();
 const score = new Score();
 const hud = new HUD(renderer);
+
+const charge = new CosmicCharge({
+  onReady() {
+    synth.chargeReady();
+    toast('차지 100% — 1·2·3 선택', '#7f4dff');
+  },
+});
+const chargePanel = new ChargePanel(charge, (kind) => onChargeSelect(kind));
+
 const dropper = new Dropper(world, () => synth.drop());
 
 const state: GameState = {
@@ -49,19 +68,25 @@ const state: GameState = {
   topOccupiedTime: 0,
   blackholeActive: false,
   bigBangAvailable: true,
-  challenges: { firstStar: false, fiveCombo: false, blackhole: false, hundredK: false },
+  bigBangUsedThisGame: false,
+  challenges: {
+    firstStar: false,
+    fiveCombo: false,
+    blackhole: false,
+    hundredK: false,
+    threeSlingshots: false,
+    fiveCharges: false,
+    blackholeNoBigBang: false,
+  },
   challengeScoreTarget: 100000,
+  slingshotCount: 0,
 };
 
 const gameOverOverlay = new GameOverOverlay(() => restart());
 const leaderboard = new LeaderboardPanel();
 const net = new NetClient({
-  onConnect() {
-    leaderboard.setConnected(true);
-  },
-  onDisconnect() {
-    leaderboard.setConnected(false);
-  },
+  onConnect() { leaderboard.setConnected(true); },
+  onDisconnect() { leaderboard.setConnected(false); },
   onLeaderboard(entries, yourSessionId) {
     leaderboard.setYourSessionId(yourSessionId);
     leaderboard.render(entries);
@@ -76,17 +101,38 @@ function maybeChallenge(key: keyof Challenges, label: string, color: string): vo
   toast(label, color);
 }
 
+function onChargeSelect(kind: ChargeKind): void {
+  if (!charge.ready) return;
+  charge.select(kind);
+  chargePanel.syncFromCharge();
+}
+
 setupMerge(engine, world, {
-  onMerge(body, x, y, newTier) {
+  onMerge({ body, x, y, newTier, parents }) {
     const info = tierInfo(newTier);
-    const result = score.addMerge(newTier);
+
+    // detect modifiers from parents
+    const isOrbit = parents.some((p) => isOrbitActive(p));
+    const isSling = parents.some((p) => wasJustSlung(p));
+    const isCharge = parents.some((p) => p._chargeMod === 'charged' || p._chargeMod === 'slow' || p._chargeMod === 'attract');
+
+    const result = score.addMerge(newTier, { orbit: isOrbit, slingshot: isSling, charge: isCharge });
     synth.merge(newTier);
+    charge.addMerge(newTier);
+    chargePanel.syncFromCharge();
+
+    // mark tier 5 result as orbit-active
+    if (info.orbitBonus) {
+      markOrbitActive(body);
+    }
 
     const pCount = 6 + newTier * 2;
     particles.emit(x, y, pCount, info.color, { speed: 3 + newTier * 0.3, life: 0.8, size: 1 + newTier * 0.15 });
     if (newTier >= 6) {
       particles.ring(x, y, 12 + newTier, info.color, info.radius * 0.6, { speed: 4 + newTier * 0.2, life: 0.9, size: 1.5 });
     }
+    if (isOrbit) particles.emit(x, y, 8, '#ffe066', { speed: 5, life: 0.7, size: 1.5 });
+    if (isSling) particles.ring(x, y, 16, '#ffd76b', info.radius * 0.5, { speed: 8, life: 0.7, size: 2 });
 
     if (newTier === 8) maybeChallenge('firstStar', '첫 항성 탄생', '#ffd96b');
     if (result.combo >= 4.5) maybeChallenge('fiveCombo', '5 콤보 달성', '#ffe066');
@@ -106,6 +152,9 @@ setupMerge(engine, world, {
 
     if (newTier === 11) {
       maybeChallenge('blackhole', '블랙홀 생성', '#7f4dff');
+      if (!state.bigBangUsedThisGame) {
+        maybeChallenge('blackholeNoBigBang', '빅뱅 없이 블랙홀', '#ff4dc4');
+      }
       state.blackholeActive = true;
       shake.add(10);
       synth.blackhole();
@@ -145,7 +194,16 @@ function handleDrop(e: MouseEvent | TouchEvent): void {
   synth.ensure();
   if ('touches' in e) e.preventDefault();
   dropper.setX(getPointerX(e));
-  dropper.drop();
+  const modifier = charge.consume();
+  const body = dropper.drop(modifier);
+  chargePanel.syncFromCharge();
+  if (body && modifier) {
+    synth.chargeUse(modifier);
+    if (modifier === 'attract') registerAttractDrop(body);
+    if (state.challenges.fiveCharges === false && charge.usedCount >= 5) {
+      maybeChallenge('fiveCharges', '코스믹 차지 5회', '#7f4dff');
+    }
+  }
 }
 
 canvas.addEventListener('mousemove', handleMove);
@@ -153,13 +211,23 @@ canvas.addEventListener('mousedown', handleDrop);
 canvas.addEventListener('touchmove', (e) => { handleMove(e); e.preventDefault(); }, { passive: false });
 canvas.addEventListener('touchstart', handleDrop, { passive: false });
 
+document.addEventListener('keydown', (e) => {
+  if (state.gameOver) return;
+  if (e.key === '1') onChargeSelect('charged');
+  else if (e.key === '2') onChargeSelect('slow');
+  else if (e.key === '3') onChargeSelect('attract');
+});
+
 bigBangBtn.addEventListener('click', () => {
   if (!state.bigBangAvailable || state.gameOver || state.blackholeActive) return;
   state.bigBangAvailable = false;
+  state.bigBangUsedThisGame = true;
   state.topOccupiedTime = 0;
   score.countBigBang();
   synth.bigbang();
   shake.add(28);
+  charge.fillFull();
+  chargePanel.syncFromCharge();
   runBigBang(world, {
     onBigBang() {
       const all = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
@@ -169,7 +237,7 @@ bigBangBtn.addEventListener('click', () => {
         if (info) particles.emit(b.position.x, b.position.y, 4, info.color, { speed: 5, life: 0.6, size: 1.5 });
       }
       particles.ring(WIDTH / 2, HEIGHT / 2, 60, '#ff4d6d', 40, { speed: 14, life: 1.5, size: 3 });
-      toast('빅뱅 — 우주 재배치', '#ff4d6d');
+      toast('빅뱅 — 우주 재배치 + 차지 충전', '#ff4d6d');
     },
   });
   updateBigBangVisibility(true);
@@ -222,11 +290,24 @@ function restart(): void {
   particles.reset();
   dropper.reset();
   score.reset();
+  charge.reset();
+  chargePanel.syncFromCharge();
+  resetChargeAttractors();
   state.gameOver = false;
   state.topOccupiedTime = 0;
   state.blackholeActive = false;
   state.bigBangAvailable = true;
-  state.challenges = { firstStar: false, fiveCombo: false, blackhole: false, hundredK: false };
+  state.bigBangUsedThisGame = false;
+  state.slingshotCount = 0;
+  state.challenges = {
+    firstStar: false,
+    fiveCombo: false,
+    blackhole: false,
+    hundredK: false,
+    threeSlingshots: false,
+    fiveCharges: false,
+    blackholeNoBigBang: false,
+  };
   hud.resetPreview();
   gameOverOverlay.hide();
   updateBigBangVisibility(true);
@@ -241,6 +322,15 @@ function loop(now: number): void {
     Matter.Engine.update(engine, 1000 / 60);
     const bodies = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
     applyGravity(bodies);
+    applyOrbitForces(bodies, now);
+    applyChargeAttractors(bodies);
+    runSlingshot(bodies, () => {
+      state.slingshotCount += 1;
+      synth.slingshot();
+      if (state.slingshotCount >= 3) {
+        maybeChallenge('threeSlingshots', '슬링샷 3회', '#ffd76b');
+      }
+    });
     dropper.update(dt);
     score.comboDecay(now);
     checkTopOccupation(bodies, dt);
@@ -267,4 +357,5 @@ function loop(now: number): void {
   requestAnimationFrame(loop);
 }
 
+chargePanel.syncFromCharge();
 requestAnimationFrame(loop);
