@@ -366,6 +366,32 @@ function applyTheme(): void {
 
 applyTheme();
 
+const sideToggleBtn = document.getElementById('side-toggle');
+const sideBackdrop = document.getElementById('side-backdrop');
+const SIDE_HIDDEN_KEY = 'cosmos.sideHidden';
+const isMobile = () => window.matchMedia('(max-width: 800px)').matches;
+
+if (localStorage.getItem(SIDE_HIDDEN_KEY) === '1' && !isMobile()) {
+  document.body.classList.add('side-hidden');
+}
+
+function toggleSide(): void {
+  if (isMobile()) {
+    document.body.classList.toggle('side-open');
+  } else {
+    const hidden = document.body.classList.toggle('side-hidden');
+    localStorage.setItem(SIDE_HIDDEN_KEY, hidden ? '1' : '0');
+  }
+}
+
+sideToggleBtn?.addEventListener('click', toggleSide);
+sideBackdrop?.addEventListener('click', () => {
+  document.body.classList.remove('side-open');
+});
+window.addEventListener('resize', () => {
+  if (!isMobile()) document.body.classList.remove('side-open');
+});
+
 function restart(): void {
   clearCosmic(world);
   particles.reset();
