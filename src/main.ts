@@ -106,6 +106,16 @@ function maxBigBangs(): number {
   return meta.hasUnlock('bigBangPlus1') ? 2 : 1;
 }
 
+function applyDrift(bodies: Matter.Body[], nowMs: number): void {
+  const d = getDifficulty();
+  if (d.driftStrength <= 0 || d.driftPeriodMs <= 0) return;
+  const force = Math.sin((nowMs / d.driftPeriodMs) * Math.PI * 2) * d.driftStrength;
+  for (const b of bodies) {
+    if (b._merged) continue;
+    Matter.Body.applyForce(b, b.position, { x: force * b.mass, y: 0 });
+  }
+}
+
 const state: GameState = {
   gameOver: false,
   topOccupiedTime: 0,
