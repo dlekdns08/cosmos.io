@@ -34,7 +34,9 @@ export function runSlingshot(bodies: Matter.Body[], onSling: (e: SlingshotEvent)
 
     for (const b of bodies) {
       if (b === ring) continue;
-      if (b.tier == null || b.tier < 6) continue;
+      // Only planets (tier 6) get slung by the giant planet's ring.
+      // Tier 7+ are too massive — slinging them caused stars to fly upward and trigger game over.
+      if (b.tier !== 6) continue;
       const last = lastSlung.get(b) ?? 0;
       if (now - last < COOLDOWN_MS) continue;
 
