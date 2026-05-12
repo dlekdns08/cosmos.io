@@ -49,10 +49,16 @@ export function runSupernova(world: Matter.World, supernovaBody: Matter.Body, ca
     const ny = tly + info.radius + 40 + Math.random() * (HEIGHT - tly - info.radius * 2 - 80);
     Matter.World.remove(world, b);
     const nb = makeBody(nx, ny, info);
-    Matter.Body.setVelocity(nb, {
-      x: (Math.random() - 0.5) * 12,
-      y: (Math.random() - 0.5) * 12,
-    });
+    if (newTier >= 8) {
+      // Heavies stay still where supernova places them — same anchor rule as merge/big-bang.
+      Matter.Body.setVelocity(nb, { x: 0, y: 0 });
+    } else {
+      // Smaller bodies get a downward-biased nudge so they don't fly above the top line.
+      Matter.Body.setVelocity(nb, {
+        x: (Math.random() - 0.5) * 10,
+        y: Math.random() * 6 + 1,
+      });
+    }
     Matter.World.add(world, nb);
   }
 
