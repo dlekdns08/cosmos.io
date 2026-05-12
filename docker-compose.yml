@@ -7,7 +7,7 @@ services:
     ports:
       - "5174:3000"
     volumes:
-      - ./data:/data
+      - cosmos-data:/data
     environment:
       PORT: "3000"
       HOST: "0.0.0.0"
@@ -19,3 +19,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  cosmos-data:
