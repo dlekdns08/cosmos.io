@@ -1,6 +1,7 @@
 import Matter from 'matter-js';
-import { DROP_TIER_MAX, tierInfo } from '../config/tiers.js';
-import { makeBody, WIDTH, TOP_LINE_Y } from './world.js';
+import { tierInfo } from '../config/tiers.js';
+import { makeBody, WIDTH, topLineY } from './world.js';
+import { getDifficulty } from '../game/runtime.js';
 import type { ChargeKind } from '../game/cosmicCharge.js';
 
 export type DropCallback = (body: Matter.Body) => void;
@@ -13,12 +14,13 @@ export class Dropper {
   queueTier: number;
   cooldown: number;
   enabled: boolean;
-  startingSeedMax = DROP_TIER_MAX;
+  startingSeedMax: number;
 
   constructor(world: Matter.World, onDrop?: DropCallback) {
     this.world = world;
     this.onDrop = onDrop;
     this.x = WIDTH / 2;
+    this.startingSeedMax = getDifficulty().dropPoolMax;
     this.nextTier = this._pick();
     this.queueTier = this._pick();
     this.cooldown = 0;
@@ -43,7 +45,7 @@ export class Dropper {
     let tier = this.nextTier;
     if (modifier === 'charged') tier = Math.min(10, tier + 1);
     const info = tierInfo(tier);
-    const body = makeBody(this.x, TOP_LINE_Y - info.radius - 6, info);
+    const body = makeBody(this.x, topLineY() - info.radius - 6, info);
     if (modifier === 'slow') {
       body.frictionAir = 0.08;
       setTimeout(() => { body.frictionAir = 0.0015; }, 1500);
@@ -53,11 +55,12 @@ export class Dropper {
     this.onDrop?.(body);
     this.nextTier = this.queueTier;
     this.queueTier = this._pick();
-    this.cooldown = 0.45;
+    this.cooldown = getDifficulty().dropCooldown;
     return body;
   }
 
   reset(): void {
+    this.startingSeedMax = getDifficulty().dropPoolMax;
     this.nextTier = this._pick();
     this.queueTier = this._pick();
     this.cooldown = 0;
