@@ -261,6 +261,7 @@ function handleDrop(e: MouseEvent | TouchEvent): void {
     if (state.challenges.fiveCharges === false && charge.usedCount >= 5) {
       maybeChallenge('fiveCharges', '코스믹 차지 5회', '#7f4dff');
     }
+    if (daily.bump('charges', 1)) dailyPanel.render();
   }
 }
 
