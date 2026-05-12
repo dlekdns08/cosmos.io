@@ -455,7 +455,7 @@ function loop(now: number): void {
     checkTopOccupation(bodies, dt);
     updateBigBangVisibility(false);
 
-    if (state.topOccupiedTime >= 3) {
+    if (state.topOccupiedTime >= getDifficulty().gameOverThreshold) {
       triggerGameOver();
     }
 
