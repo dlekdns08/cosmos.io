@@ -184,6 +184,91 @@
       text-align: center;
     }
 
+    /* Charge panel */
+    .charge-panel {
+      position: absolute;
+      left: 10px;
+      bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 156px;
+      pointer-events: none;
+    }
+    .charge-gauge {
+      position: relative;
+      height: 12px;
+      background: rgba(13,17,48,0.7);
+      border: 1px solid rgba(127,77,255,0.3);
+      border-radius: 999px;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .charge-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #7f4dff, #ff4dc4);
+      transition: width 0.2s ease-out;
+      box-shadow: 0 0 10px rgba(127,77,255,0.6);
+    }
+    .charge-gauge.ready .charge-fill {
+      animation: chargePulse 1s ease-in-out infinite;
+    }
+    @keyframes chargePulse {
+      0%, 100% { box-shadow: 0 0 8px rgba(127,77,255,0.6); }
+      50% { box-shadow: 0 0 20px rgba(255,77,196,0.95); }
+    }
+    .charge-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: #fff;
+      font-weight: 700;
+      text-shadow: 0 0 4px rgba(0,0,0,0.7);
+    }
+    .charge-buttons {
+      display: flex;
+      gap: 4px;
+      pointer-events: auto;
+    }
+    .charge-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 2px;
+      gap: 1px;
+      background: rgba(13,17,48,0.7);
+      border: 1px solid rgba(127,77,255,0.2);
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+      opacity: 0.4;
+      transition: opacity 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .charge-btn:not(:disabled) { opacity: 1; }
+    .charge-btn:not(:disabled):hover { border-color: rgba(127,77,255,0.6); }
+    .charge-btn:active:not(:disabled) { transform: scale(0.95); }
+    .charge-btn.selected {
+      background: linear-gradient(135deg, rgba(127,77,255,0.4), rgba(255,77,196,0.3));
+      border-color: #ff4dc4;
+      box-shadow: 0 0 14px rgba(127,77,255,0.5);
+    }
+    .charge-btn .key {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+    }
+    .charge-btn .name {
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .charge-btn:disabled { cursor: not-allowed; }
+
     /* Leaderboard */
     .leaderboard {
       width: 240px;
