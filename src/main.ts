@@ -496,10 +496,20 @@ function loop(now: number): void {
   if (state.gameStarted && !state.gameOver) {
     Matter.Engine.update(engine, 1000 / 60);
     const bodies = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
-    // Anchor stars: tier 8/9/10 can never move upward — prevents small bodies from shoving them across the top line.
+    // Anchor stars: tier 8/9/10 are locked against upward drift.
+    // Tracks the lowest Y the body has reached (`_anchorY`) and snaps back to it any frame
+    // the body climbs above that line — kills upward velocity AND undoes the position step,
+    // so accumulated impulses from collisions can't drift the body across the top line.
     for (const b of bodies) {
-      if (b.tier != null && b.tier >= 8 && b.tier < 11 && b.velocity.y < 0) {
-        Matter.Body.setVelocity(b, { x: b.velocity.x * 0.6, y: 0 });
+      if (b.tier == null || b.tier < 8 || b.tier >= 11) continue;
+      if (b._anchorY == null) b._anchorY = b.position.y;
+      if (b.position.y > b._anchorY) {
+        // Body drifted down (allowed) — update the anchor to the new resting level.
+        b._anchorY = b.position.y;
+      } else if (b.position.y < b._anchorY) {
+        // Body got pushed up — revert position and kill upward velocity.
+        Matter.Body.setPosition(b, { x: b.position.x, y: b._anchorY });
+        Matter.Body.setVelocity(b, { x: b.velocity.x * 0.4, y: 0 });
       }
     }
     applyGravity(bodies);
