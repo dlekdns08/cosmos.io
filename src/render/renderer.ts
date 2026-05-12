@@ -4,6 +4,7 @@ import { WIDTH, HEIGHT, TOP_LINE_Y } from '../physics/world.js';
 import type { Particles } from './particles.js';
 import type { Shake } from './shake.js';
 import type { Dropper } from '../physics/dropper.js';
+import { getTheme, type Theme } from '../config/themes.js';
 
 interface RGB { r: number; g: number; b: number; }
 
@@ -48,6 +49,7 @@ export class Renderer {
   ctx: CanvasRenderingContext2D;
   t: number;
   starfield: Star[];
+  theme: Theme;
 
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
@@ -58,7 +60,12 @@ export class Renderer {
     canvas.height = HEIGHT;
     this.t = 0;
     this.starfield = [];
+    this.theme = getTheme('default');
     this._initStars();
+  }
+
+  setTheme(id: string): void {
+    this.theme = getTheme(id);
   }
 
   private _initStars(): void {
@@ -83,8 +90,8 @@ export class Renderer {
     c.translate(off.x, off.y);
 
     const bg = c.createRadialGradient(WIDTH / 2, HEIGHT * 0.35, 0, WIDTH / 2, HEIGHT * 0.35, HEIGHT);
-    bg.addColorStop(0, '#0d1234');
-    bg.addColorStop(1, '#03040e');
+    bg.addColorStop(0, this.theme.bgInner);
+    bg.addColorStop(1, this.theme.bgOuter);
     c.fillStyle = bg;
     c.fillRect(-20, -20, WIDTH + 40, HEIGHT + 40);
 
@@ -115,13 +122,25 @@ export class Renderer {
 
     particles.draw(c);
 
+    if (blackholeActive) this._drawBlackholeVignette(c);
+
     c.restore();
   }
 
+  private _drawBlackholeVignette(c: CanvasRenderingContext2D): void {
+    const g = c.createRadialGradient(WIDTH / 2, HEIGHT / 2, Math.min(WIDTH, HEIGHT) * 0.35, WIDTH / 2, HEIGHT / 2, Math.max(WIDTH, HEIGHT) * 0.75);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(0.6, 'rgba(127,77,255,0.15)');
+    g.addColorStop(1, 'rgba(127,77,255,0.55)');
+    c.fillStyle = g;
+    c.fillRect(0, 0, WIDTH, HEIGHT);
+  }
+
   private _drawStars(c: CanvasRenderingContext2D): void {
+    const base = this.theme.star.replace(/rgba?\(([^)]+)\)/, '$1').split(',').slice(0, 3).join(',').trim();
     for (const s of this.starfield) {
       const a = s.baseAlpha + Math.sin(this.t * s.twSpeed + s.twPhase) * 0.2;
-      c.fillStyle = `rgba(255,255,255,${Math.max(0, a)})`;
+      c.fillStyle = `rgba(${base},${Math.max(0, a)})`;
       c.beginPath();
       c.arc(s.x, s.y, s.r, 0, Math.PI * 2);
       c.fill();
