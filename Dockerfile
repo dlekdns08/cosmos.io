@@ -14,6 +14,7 @@ RUN npm ci --no-audit --no-fund
 FROM deps AS build
 
 COPY tsconfig.json vite.config.ts index.html ./
+COPY public ./public
 COPY src ./src
 COPY server ./server
 RUN npm run build
