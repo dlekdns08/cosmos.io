@@ -410,6 +410,7 @@ window.addEventListener('resize', () => {
 
 function restart(): void {
   clearCosmic(world);
+  applyEngineDifficulty(engine);
   particles.reset();
   popups.reset();
   dropper.reset();
