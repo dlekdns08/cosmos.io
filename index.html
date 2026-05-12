@@ -421,8 +421,25 @@
           <div class="row">
             <div>SCORE<b id="finalScore">0</b></div>
             <div>BEST<b id="finalBest">0</b></div>
+            <div>+NP<b id="finalNp">0</b></div>
           </div>
-          <button id="restart">다시 시작</button>
+          <div class="actions">
+            <button id="restart">다시 시작</button>
+            <button id="open-nebula" class="ghost">성운 보기</button>
+          </div>
+        </div>
+        <div id="nebula">
+          <div class="nebula-card">
+            <header>
+              <h2>성운 진행도</h2>
+              <button id="nebula-close" class="ghost">닫기</button>
+            </header>
+            <div class="nebula-summary">
+              <span class="label">누적 NP</span>
+              <span class="value" id="nebula-np">0</span>
+            </div>
+            <div class="nebula-list" id="nebula-track"></div>
+          </div>
         </div>
       </div>
       <aside class="leaderboard">
