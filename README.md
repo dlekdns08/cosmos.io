@@ -97,6 +97,63 @@ src/
 
 - 박스 상단 라인을 3초 이상 물체가 점유
 
+## 배포 (Self-hosted GitHub Runner)
+
+`.github/workflows/deploy.yml`가 main 브랜치에 push가 들어오면 self-hosted runner에서 빌드 후 pm2로 서버를 무중단 재시작한다.
+
+### 호스트 준비 (최초 1회)
+
+```bash
+# 1. Self-hosted runner 등록
+#    GitHub repo → Settings → Actions → Runners → "New self-hosted runner"
+#    안내된 명령으로 runner 설치 후 백그라운드 서비스로 등록 (./svc.sh install / start)
+
+# 2. Node.js 20 + npm 설치 (nvm 권장)
+
+# 3. pm2 글로벌 설치
+npm install -g pm2
+
+# 4. pm2를 OS 시작 시 자동 실행되도록 등록 (재부팅 후에도 서버 유지)
+pm2 startup
+# 안내된 명령을 sudo로 실행
+```
+
+### 워크플로우 동작
+
+1. `actions/checkout@v4`로 코드 가져오기
+2. Node 20 셋업 + `npm ci`
+3. `npm run build` (typecheck + vite build)
+4. `npx pm2 startOrReload ecosystem.config.cjs` — 이미 실행 중이면 무중단 reload, 없으면 새로 시작
+5. `npx pm2 save` — 현재 프로세스 상태 영속화
+6. `curl /api/leaderboard` 헬스 체크
+
+### 접속
+
+- 기본 포트: `3001` (변경: `PORT` env var 또는 `ecosystem.config.cjs` 수정)
+- 같은 머신: `http://localhost:3001`
+- LAN: `http://<runner-host-ip>:3001`
+- 외부 노출: 리버스 프록시(nginx/caddy) + TLS 권장
+
+### 수동 조작
+
+```bash
+pm2 status                    # 현재 프로세스 상태
+pm2 logs cosmos               # 라이브 로그
+pm2 restart cosmos            # 재시작
+pm2 stop cosmos               # 정지
+pm2 delete cosmos             # 등록 해제
+```
+
+### 환경 변수
+
+| 변수 | 용도 |
+| --- | --- |
+| `PORT` | 서버 포트 (기본 3001) |
+| `HOST` | 바인딩 호스트 (기본 0.0.0.0) |
+| `COSMOS_DB` | SQLite 파일 경로 (기본 `server/data/cosmos.db`) |
+| `VITE_WS_URL` | 빌드 시 클라이언트가 접속할 WS URL 강제 (프런트만 다른 곳에 호스팅할 때) |
+| `BASE_PATH` | 빌드 시 vite base path (서브패스 호스팅용) |
+
 ## 라이선스
 
 MIT

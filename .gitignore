@@ -8,6 +8,9 @@ server/data/
 *.db-wal
 *.db-shm
 
+logs/
+.pm2/
+
 .DS_Store
 *.log
 npm-debug.log*

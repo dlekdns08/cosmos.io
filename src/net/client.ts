@@ -45,6 +45,8 @@ const SCORE_PUSH_INTERVAL_MS = 250;
 const RECONNECT_MIN_MS = 500;
 const RECONNECT_MAX_MS = 8000;
 
+const CONFIGURED_WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) || null;
+
 function loadOrCreate<T>(key: string, factory: () => T): T {
   const existing = localStorage.getItem(key);
   if (existing) return existing as unknown as T;
@@ -86,7 +88,7 @@ export class NetClient {
   connect(): void {
     if (this.destroyed) return;
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const url = `${proto}://${location.host}/ws`;
+    const url = CONFIGURED_WS_URL ?? `${proto}://${location.host}/ws`;
     try {
       this.ws = new WebSocket(url);
     } catch {
