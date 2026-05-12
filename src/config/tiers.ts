@@ -12,6 +12,7 @@ export interface TierInfo {
   blackhole?: boolean;
   gravity?: number;
   gravityRadius?: number;
+  orbitBonus?: boolean;
 }
 
 export const TIERS: readonly (TierInfo | null)[] = [
@@ -20,7 +21,7 @@ export const TIERS: readonly (TierInfo | null)[] = [
   { tier: 2,  name: '가스구름',  radius: 19, color: '#a8c0ff', accent: '#5b7ddc', glow: 0.25, density: 0.0014 },
   { tier: 3,  name: '운석',      radius: 25, color: '#9b8772', accent: '#5e4d3c', glow: 0.0,  density: 0.0018 },
   { tier: 4,  name: '소행성',    radius: 32, color: '#7a6859', accent: '#3a2f24', glow: 0.0,  density: 0.0022 },
-  { tier: 5,  name: '위성',      radius: 40, color: '#d6caa8', accent: '#7e6f4f', glow: 0.1,  density: 0.0024 },
+  { tier: 5,  name: '위성',      radius: 40, color: '#d6caa8', accent: '#7e6f4f', glow: 0.1,  density: 0.0024, orbitBonus: true },
   { tier: 6,  name: '행성',      radius: 48, color: '#3fa1ff', accent: '#1b4ea0', glow: 0.55, density: 0.0026 },
   { tier: 7,  name: '거대행성',  radius: 58, color: '#e6a25f', accent: '#7b4621', glow: 0.7,  density: 0.0028, rings: true },
   { tier: 8,  name: '항성',      radius: 68, color: '#ffd96b', accent: '#ff8e3a', glow: 1.4,  density: 0.0030, gravity: 0.045,  gravityRadius: 220 },
