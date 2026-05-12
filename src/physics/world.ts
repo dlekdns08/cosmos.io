@@ -1,10 +1,14 @@
 import Matter from 'matter-js';
 import type { TierInfo } from '../config/tiers.js';
+import { getDifficulty } from '../game/runtime.js';
 
 export const WIDTH = 480;
 export const HEIGHT = 720;
 export const WALL_THICKNESS = 60;
-export const TOP_LINE_Y = 130;
+
+export function topLineY(): number {
+  return getDifficulty().topLineY;
+}
 
 export interface WorldHandle {
   engine: Matter.Engine;
@@ -12,8 +16,9 @@ export interface WorldHandle {
 }
 
 export function setupWorld(): WorldHandle {
+  const d = getDifficulty();
   const engine = Matter.Engine.create({
-    gravity: { x: 0, y: 1.0, scale: 0.0015 },
+    gravity: { x: 0, y: 1.0, scale: d.worldGravityScale },
     enableSleeping: false,
   });
   const world = engine.world;
@@ -34,8 +39,13 @@ export function setupWorld(): WorldHandle {
   return { engine, world };
 }
 
+export function applyEngineDifficulty(engine: Matter.Engine): void {
+  engine.gravity.scale = getDifficulty().worldGravityScale;
+}
+
 export function makeBody(x: number, y: number, tierInfo: TierInfo): Matter.Body {
-  const restitution = tierInfo.tier === 6 ? 0.07 : 0.18;
+  const d = getDifficulty();
+  const restitution = tierInfo.tier === 6 ? Math.min(0.1, d.restitution * 0.4) : d.restitution;
   const body = Matter.Bodies.circle(x, y, tierInfo.radius, {
     restitution,
     friction: tierInfo.tier === 6 ? 0.08 : 0.04,
