@@ -131,6 +131,9 @@ function maybeChallenge(key: keyof Challenges, label: string, color: string): vo
   if (state.challenges[key]) return;
   state.challenges[key] = true;
   toast(label, color);
+  if (meta.registerFirstAchievement(key)) {
+    state.firstAchievementsThisGame += 1;
+  }
 }
 
 function onChargeSelect(kind: ChargeKind): void {
