@@ -1,6 +1,6 @@
 import type Matter from 'matter-js';
 import { TIERS, tierInfo, type TierInfo } from '../config/tiers.js';
-import { WIDTH, HEIGHT, TOP_LINE_Y } from '../physics/world.js';
+import { WIDTH, HEIGHT, topLineY } from '../physics/world.js';
 import type { Particles } from './particles.js';
 import type { Shake } from './shake.js';
 import type { Dropper } from '../physics/dropper.js';
@@ -101,8 +101,9 @@ export class Renderer {
     c.lineWidth = 1;
     c.setLineDash([6, 6]);
     c.beginPath();
-    c.moveTo(0, TOP_LINE_Y);
-    c.lineTo(WIDTH, TOP_LINE_Y);
+    const tly = topLineY();
+    c.moveTo(0, tly);
+    c.lineTo(WIDTH, tly);
     c.stroke();
     c.setLineDash([]);
 
@@ -111,10 +112,10 @@ export class Renderer {
       c.strokeStyle = 'rgba(127,77,255,0.18)';
       c.lineWidth = 1;
       c.beginPath();
-      c.moveTo(dropper.x, TOP_LINE_Y);
+      c.moveTo(dropper.x, tly);
       c.lineTo(dropper.x, HEIGHT - 4);
       c.stroke();
-      this._drawPreviewBody(c, dropper.x, TOP_LINE_Y - info.radius - 6, info);
+      this._drawPreviewBody(c, dropper.x, tly - info.radius - 6, info);
     }
 
     const sorted = bodies.slice().sort((a, b) => (a.tier ?? 0) - (b.tier ?? 0));
