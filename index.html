@@ -221,6 +221,96 @@
       border-color: #ff4dc4;
       box-shadow: 0 0 14px rgba(127,77,255,0.5);
     }
+    /* Start screen */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      background: rgba(5,6,22,0.95);
+      backdrop-filter: blur(14px);
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease-out;
+    }
+    #start-screen.show { opacity: 1; pointer-events: auto; }
+    #start-screen .start-card {
+      max-width: 420px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 32px 28px;
+      background: rgba(13,17,48,0.85);
+      border: 1px solid rgba(127,77,255,0.3);
+      border-radius: 20px;
+      box-shadow: 0 0 60px rgba(127,77,255,0.25);
+    }
+    #start-screen h2 {
+      font-size: 38px;
+      letter-spacing: 0.32em;
+      background: linear-gradient(135deg, #7f4dff, #ff4d6d);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    #start-screen .tagline {
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 0.18em;
+      margin-top: -8px;
+    }
+    #start-screen .prompt {
+      font-size: 12px;
+      color: var(--text);
+      letter-spacing: 0.18em;
+      margin-top: 6px;
+      opacity: 0.8;
+    }
+    #start-screen .diff-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      margin-top: 6px;
+    }
+    #start-screen .diff-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 18px;
+      background: rgba(13,17,48,0.7);
+      border: 1px solid rgba(127,77,255,0.25);
+      border-radius: 12px;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease-out;
+    }
+    #start-screen .diff-card:hover {
+      border-color: rgba(127,77,255,0.65);
+      background: rgba(127,77,255,0.16);
+      transform: translateX(3px);
+    }
+    #start-screen .diff-card:active { transform: scale(0.98); }
+    #start-screen .diff-card .badge {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      min-width: 72px;
+    }
+    #start-screen .diff-card[data-diff="easy"] .badge { color: #6effa0; }
+    #start-screen .diff-card[data-diff="normal"] .badge { color: #ffd76b; }
+    #start-screen .diff-card[data-diff="hard"] .badge { color: #ff4dc4; }
+    #start-screen .diff-card .desc {
+      font-size: 12px;
+      color: var(--dim);
+    }
+
     .diff-tag {
       font-size: 9px;
       letter-spacing: 0.18em;
@@ -663,6 +753,27 @@
       <span class="icon">≡</span><span class="text">패널</span>
     </button>
     <div class="backdrop" id="side-backdrop"></div>
+    <div id="start-screen" class="show">
+      <div class="start-card">
+        <h2>COSMOS</h2>
+        <p class="tagline">우주의 진화를 손바닥 안에서</p>
+        <p class="prompt">난이도를 선택하세요</p>
+        <div class="diff-cards">
+          <button class="diff-card" data-diff="easy">
+            <span class="badge">쉬움</span>
+            <span class="desc">여유롭게 — 작고 천천히</span>
+          </button>
+          <button class="diff-card" data-diff="normal">
+            <span class="badge">보통</span>
+            <span class="desc">표준 진화</span>
+          </button>
+          <button class="diff-card" data-diff="hard">
+            <span class="badge">어려움</span>
+            <span class="desc">빠른 우주 + 약한 바람</span>
+          </button>
+        </div>
+      </div>
+    </div>
     <div class="layout">
       <div class="stage">
         <div class="hud">
