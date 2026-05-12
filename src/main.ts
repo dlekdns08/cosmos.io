@@ -92,9 +92,10 @@ const chargePanel = new ChargePanel(charge, (kind) => onChargeSelect(kind));
 const dropper = new Dropper(world, () => synth.drop());
 
 function applyUnlocks(): void {
-  if (meta.hasUnlock('startingSeed5')) dropper.startingSeedMax = 5;
-  else if (meta.hasUnlock('startingSeed4')) dropper.startingSeedMax = 4;
-  else dropper.startingSeedMax = 3;
+  let pool = getDifficulty().dropPoolMax;
+  if (meta.hasUnlock('startingSeed5')) pool = Math.max(pool, 5);
+  else if (meta.hasUnlock('startingSeed4')) pool = Math.max(pool, 4);
+  dropper.startingSeedMax = pool;
 
   if (meta.hasUnlock('chargeRate15')) charge.setRate(1.5);
   else if (meta.hasUnlock('chargeRate12')) charge.setRate(1.2);
