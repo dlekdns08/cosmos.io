@@ -102,6 +102,7 @@ export function runBlackholePhase(world: Matter.World, blackhole: Matter.Body, c
 
 export function runBigBang(world: Matter.World, callbacks: BigBangCallbacks): void {
   const all = Matter.Composite.allBodies(world);
+  const now = performance.now();
   for (const b of all) {
     if (b.label !== 'cosmic' || b.tier == null) continue;
     const info = tierInfo(b.tier);
@@ -109,11 +110,20 @@ export function runBigBang(world: Matter.World, callbacks: BigBangCallbacks): vo
     const tly = topLineY();
     const ny = tly + info.radius + 80 + Math.random() * (HEIGHT - tly - info.radius * 2 - 120);
     Matter.Body.setPosition(b, { x: nx, y: ny });
-    Matter.Body.setVelocity(b, {
-      x: (Math.random() - 0.5) * 16,
-      y: (Math.random() - 0.5) * 16,
-    });
-    Matter.Body.setAngularVelocity(b, (Math.random() - 0.5) * 0.4);
+    if (b.tier >= 8) {
+      // Anchor heavies — Big Bang relocates them but doesn't kick them around.
+      Matter.Body.setVelocity(b, { x: 0, y: 0 });
+      Matter.Body.setAngularVelocity(b, 0);
+    } else {
+      // Energetic but biased downward so nothing flies above the top line.
+      Matter.Body.setVelocity(b, {
+        x: (Math.random() - 0.5) * 10,
+        y: Math.random() * 6 + 1,
+      });
+      Matter.Body.setAngularVelocity(b, (Math.random() - 0.5) * 0.4);
+    }
+    // Reset spawn time so the freshly relocated bodies get the 1.5s game-over grace again.
+    b._spawnT = now;
   }
   callbacks.onBigBang?.();
 }
