@@ -55,11 +55,18 @@ interface GameState {
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 const bigBangBtn = document.getElementById('bigbang') as HTMLButtonElement | null;
 const openNebulaBtn = document.getElementById('open-nebula') as HTMLButtonElement | null;
-if (!canvas || !bigBangBtn || !openNebulaBtn) throw new Error('Required DOM elements missing');
+const shareBtn = document.getElementById('share-card') as HTMLButtonElement | null;
+if (!canvas || !bigBangBtn || !openNebulaBtn || !shareBtn) throw new Error('Required DOM elements missing');
 
 const meta = new Meta();
 const nebula = new NebulaPanel();
 openNebulaBtn.addEventListener('click', () => nebula.show(meta));
+
+const daily = new DailyChallenges();
+const dailyPanel = new DailyPanel(daily);
+
+let lastAwardedNp = 0;
+shareBtn.addEventListener('click', () => downloadShareCard(score, lastAwardedNp));
 
 const { engine, world } = setupWorld();
 const renderer = new Renderer(canvas);
