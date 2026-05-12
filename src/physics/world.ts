@@ -29,10 +29,14 @@ export function setupWorld(): WorldHandle {
     restitution: 0.05,
     label: 'wall',
   };
+  // Ceiling sits far above viewport so drops still spawn above TOP_LINE_Y unobstructed,
+  // but anything launched upward (e.g. via the star's gravity well) can't escape the world.
+  const CEILING_Y = -200;
   const walls = [
     Matter.Bodies.rectangle(WIDTH / 2, HEIGHT + WALL_THICKNESS / 2, WIDTH + WALL_THICKNESS * 2, WALL_THICKNESS, opts),
     Matter.Bodies.rectangle(-WALL_THICKNESS / 2, HEIGHT / 2, WALL_THICKNESS, HEIGHT * 2, opts),
     Matter.Bodies.rectangle(WIDTH + WALL_THICKNESS / 2, HEIGHT / 2, WALL_THICKNESS, HEIGHT * 2, opts),
+    Matter.Bodies.rectangle(WIDTH / 2, CEILING_Y - WALL_THICKNESS / 2, WIDTH + WALL_THICKNESS * 2, WALL_THICKNESS, opts),
   ];
   Matter.World.add(world, walls);
 
