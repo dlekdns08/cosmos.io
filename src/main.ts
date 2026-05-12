@@ -72,6 +72,27 @@ let lastAwardedNp = 0;
 shareBtn.addEventListener('click', () => downloadShareCard(score, lastAwardedNp));
 
 loadDifficulty();
+const diffTagEl = document.getElementById('diff-tag');
+const diffButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.diff-btn'));
+
+function syncDifficultyUI(): void {
+  const cur = getDifficulty();
+  if (diffTagEl) diffTagEl.textContent = cur.label;
+  for (const btn of diffButtons) {
+    btn.classList.toggle('active', btn.dataset.diff === cur.id);
+  }
+}
+
+for (const btn of diffButtons) {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.diff as DifficultyId | undefined;
+    if (!id || !(id in DIFFICULTIES)) return;
+    setDifficulty(id);
+    syncDifficultyUI();
+    restart();
+  });
+}
+
 const { engine, world } = setupWorld();
 const renderer = new Renderer(canvas);
 const particles = new Particles();
@@ -381,6 +402,7 @@ function applyTheme(): void {
 }
 
 applyTheme();
+syncDifficultyUI();
 
 const sideToggleBtn = document.getElementById('side-toggle');
 const sideBackdrop = document.getElementById('side-backdrop');
