@@ -13,6 +13,18 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
+      - name: Pre-clean root-owned leftovers (legacy bind mount)
+        shell: bash
+        run: |
+          set -e
+          if [ -d "$GITHUB_WORKSPACE/data" ]; then
+            echo "Removing $GITHUB_WORKSPACE/data"
+            if ! rm -rf "$GITHUB_WORKSPACE/data" 2>/dev/null; then
+              echo "rm denied — using docker (root) to clean"
+              docker run --rm -v "$GITHUB_WORKSPACE:/work" busybox rm -rf /work/data
+            fi
+          fi
+
       - uses: actions/checkout@v4
 
       - name: Build & restart container
