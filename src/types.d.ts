@@ -17,5 +17,6 @@ declare namespace Matter {
     _orbitUntil?: number;
     _slingshotUntil?: number;
     _chargeMod?: 'charged' | 'slow' | 'attract' | null;
+    _anchorY?: number;
   }
 }
