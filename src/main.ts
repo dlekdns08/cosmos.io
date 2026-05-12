@@ -1,6 +1,9 @@
 import Matter from 'matter-js';
 import { TIERS, tierInfo } from './config/tiers.js';
-import { setupWorld, clearCosmic, WIDTH, HEIGHT, TOP_LINE_Y } from './physics/world.js';
+import { setupWorld, clearCosmic, applyEngineDifficulty, WIDTH, HEIGHT, topLineY } from './physics/world.js';
+import { loadDifficulty, setDifficulty, getDifficulty } from './game/runtime.js';
+import type { DifficultyId } from './config/difficulty.js';
+import { DIFFICULTIES } from './config/difficulty.js';
 import { Dropper } from './physics/dropper.js';
 import { applyGravity } from './physics/gravity.js';
 import { setupMerge } from './game/merge.js';
