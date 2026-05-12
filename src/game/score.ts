@@ -1,8 +1,11 @@
+import { getDifficulty } from './runtime.js';
+
 const BEST_KEY = 'cosmos.best';
 const BIGBANG_KEY = 'cosmos.bigbang';
-const COMBO_WINDOW_MS = 1000;
 const COMBO_MAX = 5;
 const COMBO_MULT = 1.5;
+
+function comboWindow(): number { return getDifficulty().comboWindowMs; }
 
 export interface MergeResult {
   gained: number;
@@ -33,7 +36,7 @@ export class Score {
 
   addMerge(tier: number, mods: MergeModifiers = {}): MergeResult {
     const now = performance.now();
-    if (now - this._lastMergeT < COMBO_WINDOW_MS) {
+    if (now - this._lastMergeT < comboWindow()) {
       this.combo = Math.min(this.combo * COMBO_MULT, COMBO_MAX);
     } else {
       this.combo = 1;
@@ -54,7 +57,7 @@ export class Score {
   }
 
   comboDecay(nowMs: number): void {
-    if (this.combo > 1 && nowMs - this._lastMergeT > COMBO_WINDOW_MS) {
+    if (this.combo > 1 && nowMs - this._lastMergeT > comboWindow()) {
       this.combo = 1;
     }
   }
