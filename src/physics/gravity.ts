@@ -34,7 +34,9 @@ export function applyGravity(bodies: Matter.Body[]): void {
       if (d2 > a.r2 || d2 < 1) continue;
       const d = Math.sqrt(d2);
       const fall = 1 - d2 / a.r2;
-      const force = (a.g * b.mass * fall) / d;
+      // Softened 1/d to avoid runaway forces when a body is right next to (or inside) the attractor.
+      const softD = Math.max(d, 25);
+      const force = (a.g * b.mass * fall) / softD;
       fx += force * dx;
       fy += force * dy;
     }
