@@ -53,31 +53,45 @@
       justify-content: center;
       --avail-w: calc(100vw - var(--side-subtract) - var(--pad) * 2);
       --avail-h: calc(100vh - var(--pad) * 2 - var(--credit-h) - 8px);
-      --stage-h: min(var(--avail-h), calc(var(--avail-w) * 720 / 480));
-      --stage-w: calc(var(--stage-h) * 480 / 720);
+      --play-h: min(calc(var(--avail-h) - var(--hud-h)), calc(var(--avail-w) * 720 / 480));
+      --play-w: calc(var(--play-h) * 480 / 720);
+      --stage-h: calc(var(--play-h) + var(--hud-h));
     }
     .stage {
       position: relative;
-      display: block;
+      display: flex;
+      flex-direction: column;
       height: var(--stage-h);
-      width: var(--stage-w);
+      width: var(--play-w);
       flex-shrink: 0;
+    }
+    .play {
+      position: relative;
+      flex: 1;
+      width: 100%;
       aspect-ratio: 480 / 720;
       overflow: hidden;
-      border-radius: 12px;
+      border: 1px solid rgba(127,77,255,0.2);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      background: #050616;
     }
     .hud {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      z-index: 3;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px 10px;
+      background: rgba(13,17,48,0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(127,77,255,0.15);
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+    }
+    .hud-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 10px;
-      background: rgba(13,17,48,0.6);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(127,77,255,0.15);
-      border-radius: 12px 12px 0 0;
       gap: 12px;
     }
     .hud .col { display: flex; flex-direction: column; gap: 2px; }
@@ -93,11 +107,11 @@
     }
     .hud .next-wrap { display: flex; align-items: center; gap: 8px; }
     canvas#next {
-      width: 56px;
-      height: 56px;
+      width: 40px;
+      height: 40px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(127,77,255,0.2);
-      border-radius: 10px;
+      border-radius: 8px;
     }
     canvas#game {
       display: block;
@@ -105,9 +119,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      background: #050616;
-      border: 1px solid rgba(127,77,255,0.2);
-      border-radius: 12px;
+      background: transparent;
       touch-action: none;
       cursor: pointer;
     }
@@ -284,20 +296,17 @@
       text-align: center;
     }
 
-    /* Charge panel */
+    /* Charge panel — second row of HUD */
     .charge-panel {
-      position: absolute;
-      left: 10px;
-      bottom: 14px;
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 6px;
-      width: 156px;
-      pointer-events: none;
     }
     .charge-gauge {
       position: relative;
-      height: 12px;
+      flex: 1;
+      min-width: 60px;
+      height: 14px;
       background: rgba(13,17,48,0.7);
       border: 1px solid rgba(127,77,255,0.3);
       border-radius: 999px;
@@ -325,7 +334,7 @@
       align-items: center;
       justify-content: center;
       font-size: 9px;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.12em;
       color: #fff;
       font-weight: 700;
       text-shadow: 0 0 4px rgba(0,0,0,0.7);
@@ -334,17 +343,17 @@
       display: flex;
       gap: 4px;
       pointer-events: auto;
+      flex-shrink: 0;
     }
     .charge-btn {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+      display: inline-flex;
       align-items: center;
-      padding: 6px 2px;
-      gap: 1px;
+      gap: 4px;
+      padding: 4px 8px;
+      min-height: 24px;
       background: rgba(13,17,48,0.7);
       border: 1px solid rgba(127,77,255,0.2);
-      border-radius: 8px;
+      border-radius: 6px;
       color: var(--text);
       cursor: pointer;
       opacity: 0.4;
@@ -362,7 +371,11 @@
       font-size: 9px;
       color: var(--dim);
       letter-spacing: 0.1em;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(127,77,255,0.15);
     }
+    .charge-btn.selected .key { background: rgba(255,255,255,0.18); color: #fff; }
     .charge-btn .name {
       font-size: 11px;
       font-weight: 700;
@@ -617,40 +630,44 @@
     <div class="backdrop" id="side-backdrop"></div>
     <div class="layout">
       <div class="stage">
-        <canvas id="game"></canvas>
         <div class="hud">
-          <div class="col">
-            <span class="label">SCORE</span>
-            <span class="value" id="score">0</span>
+          <div class="hud-row">
+            <div class="col">
+              <span class="label">SCORE</span>
+              <span class="value" id="score">0</span>
+            </div>
+            <div class="combo" id="combo"></div>
+            <div class="col" style="align-items: flex-end;">
+              <span class="label">BEST · <span id="best">0</span></span>
+              <div class="next-wrap">
+                <span class="label">NEXT</span>
+                <canvas id="next"></canvas>
+              </div>
+            </div>
           </div>
-          <div class="combo" id="combo"></div>
-          <div class="col" style="align-items: flex-end;">
-            <span class="label">BEST · <span id="best">0</span></span>
-            <div class="next-wrap">
-              <span class="label">NEXT</span>
-              <canvas id="next"></canvas>
+          <div id="charge-panel" class="charge-panel">
+            <div class="charge-gauge">
+              <div class="charge-fill" id="charge-fill"></div>
+              <div class="charge-label" id="charge-label">CHARGE 0%</div>
+            </div>
+            <div class="charge-buttons">
+              <button class="charge-btn" data-kind="charged" id="charge-btn-charged" disabled>
+                <span class="key">1</span><span class="name">충전</span>
+              </button>
+              <button class="charge-btn" data-kind="slow" id="charge-btn-slow" disabled>
+                <span class="key">2</span><span class="name">슬로우</span>
+              </button>
+              <button class="charge-btn" data-kind="attract" id="charge-btn-attract" disabled>
+                <span class="key">3</span><span class="name">인력</span>
+              </button>
             </div>
           </div>
         </div>
-        <div id="charge-panel" class="charge-panel">
-          <div class="charge-gauge">
-            <div class="charge-fill" id="charge-fill"></div>
-            <div class="charge-label" id="charge-label">CHARGE 0%</div>
-          </div>
-          <div class="charge-buttons">
-            <button class="charge-btn" data-kind="charged" id="charge-btn-charged" disabled>
-              <span class="key">1</span><span class="name">충전</span>
-            </button>
-            <button class="charge-btn" data-kind="slow" id="charge-btn-slow" disabled>
-              <span class="key">2</span><span class="name">슬로우</span>
-            </button>
-            <button class="charge-btn" data-kind="attract" id="charge-btn-attract" disabled>
-              <span class="key">3</span><span class="name">인력</span>
-            </button>
-          </div>
+        <div class="play">
+          <canvas id="game"></canvas>
+          <button id="bigbang" class="bigbang">빅뱅 (1)</button>
+          <div id="toasts"></div>
         </div>
-        <button id="bigbang" class="bigbang">빅뱅 (1)</button>
-        <div id="toasts"></div>
         <div id="gameover">
           <h2>COSMOS</h2>
           <div class="row">
