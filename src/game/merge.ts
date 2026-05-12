@@ -1,6 +1,6 @@
 import Matter from 'matter-js';
 import { MAX_TIER, tierInfo } from '../config/tiers.js';
-import { makeBody } from '../physics/world.js';
+import { makeBody, topLineY } from '../physics/world.js';
 
 export interface MergeInfo {
   body: Matter.Body;
@@ -47,7 +47,19 @@ export function setupMerge(engine: Matter.Engine, world: Matter.World, callbacks
       Matter.World.remove(world, b);
 
       const next = makeBody(mx, my, info);
-      Matter.Body.setVelocity(next, { x: vx, y: vy });
+
+      // Tier 8+ are huge and heavy enough that small bodies can shove them around;
+      // anchor them on creation — zero velocity and ensure they don't spawn above the top line.
+      if (newTier >= 8) {
+        Matter.Body.setVelocity(next, { x: 0, y: 0 });
+        const minY = topLineY() + info.radius + 30;
+        if (next.position.y < minY) {
+          Matter.Body.setPosition(next, { x: next.position.x, y: minY });
+        }
+      } else {
+        Matter.Body.setVelocity(next, { x: vx, y: vy });
+      }
+
       Matter.World.add(world, next);
 
       callbacks.onMerge?.({ body: next, x: mx, y: my, newTier, parents: [a, b] });
