@@ -12,6 +12,7 @@
       --dim: #8c93b8;
       --accent: #7f4dff;
       --warn: #ff5a5a;
+      --live: #ff4d6d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -34,11 +35,17 @@
       gap: 12px;
       padding: 12px;
     }
+    .layout {
+      display: flex;
+      gap: 16px;
+      align-items: stretch;
+      max-height: calc(100vh - 60px);
+    }
     .stage {
       position: relative;
       aspect-ratio: 480 / 720;
-      max-height: calc(100vh - 120px);
-      max-width: 100vw;
+      max-height: calc(100vh - 80px);
+      max-width: calc(100vw - 280px);
       display: flex;
       flex-direction: column;
     }
@@ -176,36 +183,170 @@
       letter-spacing: 0.2em;
       text-align: center;
     }
+
+    /* Leaderboard */
+    .leaderboard {
+      width: 240px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: rgba(13,17,48,0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(127,77,255,0.15);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .leaderboard header {
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid rgba(127,77,255,0.15);
+    }
+    .leaderboard header h3 {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: var(--text);
+    }
+    .leaderboard header .status {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: #6effa0;
+    }
+    .leaderboard header .status.off {
+      color: var(--warn);
+    }
+    .leaderboard .list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 6px;
+    }
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 8px;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+    .lb-row:not(:last-child) {
+      border-bottom: 1px solid rgba(127,77,255,0.06);
+    }
+    .lb-row.you {
+      background: rgba(127,77,255,0.18);
+      border: 1px solid rgba(127,77,255,0.5);
+    }
+    .lb-row.alive .lb-name::after {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--live);
+      border-radius: 50%;
+      margin-left: 6px;
+      box-shadow: 0 0 8px var(--live);
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .lb-rank {
+      width: 32px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--dim);
+      text-align: center;
+    }
+    .lb-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .lb-name {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lb-meta {
+      font-size: 11px;
+      color: var(--dim);
+      margin-top: 2px;
+    }
+    .lb-live {
+      display: inline-block;
+      font-size: 9px;
+      padding: 1px 5px;
+      background: var(--live);
+      color: white;
+      border-radius: 4px;
+      margin-right: 4px;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+    }
+
+    @media (max-width: 800px) {
+      .layout { flex-direction: column; align-items: center; }
+      .stage { max-width: 100vw; max-height: calc(100vh - 260px); }
+      .leaderboard { width: 100%; max-width: 480px; max-height: 180px; }
+    }
   </style>
 </head>
 <body>
   <div id="app">
-    <div class="stage">
-      <div class="hud">
-        <div class="col">
-          <span class="label">SCORE</span>
-          <span class="value" id="score">0</span>
-        </div>
-        <div class="combo" id="combo"></div>
-        <div class="col" style="align-items: flex-end;">
-          <span class="label">BEST · <span id="best">0</span></span>
-          <div class="next-wrap">
-            <span class="label">NEXT</span>
-            <canvas id="next"></canvas>
+    <div class="layout">
+      <div class="stage">
+        <div class="hud">
+          <div class="col">
+            <span class="label">SCORE</span>
+            <span class="value" id="score">0</span>
+          </div>
+          <div class="combo" id="combo"></div>
+          <div class="col" style="align-items: flex-end;">
+            <span class="label">BEST · <span id="best">0</span></span>
+            <div class="next-wrap">
+              <span class="label">NEXT</span>
+              <canvas id="next"></canvas>
+            </div>
           </div>
         </div>
-      </div>
-      <canvas id="game"></canvas>
-      <button id="bigbang" class="bigbang">빅뱅 (1)</button>
-      <div id="toasts"></div>
-      <div id="gameover">
-        <h2>COSMOS</h2>
-        <div class="row">
-          <div>SCORE<b id="finalScore">0</b></div>
-          <div>BEST<b id="finalBest">0</b></div>
+        <canvas id="game"></canvas>
+        <div id="charge-panel" class="charge-panel">
+          <div class="charge-gauge">
+            <div class="charge-fill" id="charge-fill"></div>
+            <div class="charge-label" id="charge-label">CHARGE 0%</div>
+          </div>
+          <div class="charge-buttons">
+            <button class="charge-btn" data-kind="charged" id="charge-btn-charged" disabled>
+              <span class="key">1</span><span class="name">충전</span>
+            </button>
+            <button class="charge-btn" data-kind="slow" id="charge-btn-slow" disabled>
+              <span class="key">2</span><span class="name">슬로우</span>
+            </button>
+            <button class="charge-btn" data-kind="attract" id="charge-btn-attract" disabled>
+              <span class="key">3</span><span class="name">인력</span>
+            </button>
+          </div>
         </div>
-        <button id="restart">다시 시작</button>
+        <button id="bigbang" class="bigbang">빅뱅 (1)</button>
+        <div id="toasts"></div>
+        <div id="gameover">
+          <h2>COSMOS</h2>
+          <div class="row">
+            <div>SCORE<b id="finalScore">0</b></div>
+            <div>BEST<b id="finalBest">0</b></div>
+          </div>
+          <button id="restart">다시 시작</button>
+        </div>
       </div>
+      <aside class="leaderboard">
+        <header>
+          <h3>리더보드</h3>
+          <span class="status" id="leaderboard-status">연결 중...</span>
+        </header>
+        <div class="list" id="leaderboard-list"></div>
+      </aside>
     </div>
     <div class="credit">COSMOS — 우주의 진화를 손바닥 안에서</div>
   </div>
