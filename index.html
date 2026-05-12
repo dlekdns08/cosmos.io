@@ -200,6 +200,38 @@
     }
     #gameover .row { display: flex; gap: 24px; font-size: 14px; color: var(--dim); }
     #gameover .row b { display: block; font-size: 24px; color: var(--text); margin-top: 4px; }
+    .diff-picker { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 6px; }
+    .diff-label { font-size: 10px; color: var(--dim); letter-spacing: 0.2em; }
+    .diff-buttons { display: flex; gap: 6px; }
+    .diff-btn {
+      padding: 6px 14px;
+      background: rgba(13,17,48,0.7);
+      border: 1px solid rgba(127,77,255,0.3);
+      color: var(--text);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .diff-btn:hover { border-color: rgba(127,77,255,0.6); }
+    .diff-btn:active { transform: scale(0.95); }
+    .diff-btn.active {
+      background: linear-gradient(135deg, rgba(127,77,255,0.4), rgba(255,77,196,0.3));
+      border-color: #ff4dc4;
+      box-shadow: 0 0 14px rgba(127,77,255,0.5);
+    }
+    .diff-tag {
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      padding: 2px 6px;
+      background: rgba(127,77,255,0.2);
+      border: 1px solid rgba(127,77,255,0.4);
+      border-radius: 999px;
+      color: #d4baff;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
     #gameover .actions { display: flex; gap: 12px; margin-top: 12px; }
     #gameover button {
       padding: 12px 28px;
@@ -636,7 +668,7 @@
         <div class="hud">
           <div class="hud-row">
             <div class="col">
-              <span class="label">SCORE</span>
+              <span class="label">SCORE<span class="diff-tag" id="diff-tag">보통</span></span>
               <span class="value" id="score">0</span>
             </div>
             <div class="combo" id="combo"></div>
