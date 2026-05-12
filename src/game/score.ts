@@ -7,6 +7,13 @@ const COMBO_MULT = 1.5;
 export interface MergeResult {
   gained: number;
   combo: number;
+  multiplier: number;
+}
+
+export interface MergeModifiers {
+  charge?: boolean;
+  slingshot?: boolean;
+  orbit?: boolean;
 }
 
 export class Score {
@@ -24,7 +31,7 @@ export class Score {
     this._lastMergeT = 0;
   }
 
-  addMerge(tier: number): MergeResult {
+  addMerge(tier: number, mods: MergeModifiers = {}): MergeResult {
     const now = performance.now();
     if (now - this._lastMergeT < COMBO_WINDOW_MS) {
       this.combo = Math.min(this.combo * COMBO_MULT, COMBO_MAX);
@@ -33,9 +40,13 @@ export class Score {
     }
     this._lastMergeT = now;
     const base = Math.pow(2, tier);
-    const gained = Math.round(base * this.combo);
+    let multiplier = this.combo;
+    if (mods.charge) multiplier *= 1.2;
+    if (mods.slingshot) multiplier *= 1.5;
+    if (mods.orbit) multiplier *= 1.3;
+    const gained = Math.round(base * multiplier);
     this.value += gained;
-    return { gained, combo: this.combo };
+    return { gained, combo: this.combo, multiplier };
   }
 
   add(amount: number): void {
