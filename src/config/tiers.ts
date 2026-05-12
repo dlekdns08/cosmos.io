@@ -15,7 +15,7 @@ export interface TierInfo {
   orbitBonus?: boolean;
 }
 
-export const TIERS: readonly (TierInfo | null)[] = [
+const BASE_TIERS: readonly (TierInfo | null)[] = [
   null,
   { tier: 1,  name: '우주먼지',  radius: 17,  color: '#dfe9ff', accent: '#7aa4ff', glow: 0.15, density: 0.0012 },
   { tier: 2,  name: '가스구름',  radius: 23,  color: '#a8c0ff', accent: '#5b7ddc', glow: 0.25, density: 0.0014 },
@@ -29,6 +29,20 @@ export const TIERS: readonly (TierInfo | null)[] = [
   { tier: 10, name: '초신성',    radius: 110, color: '#ffffff', accent: '#ffe25a', glow: 2.5,  density: 0.0036, gravity: 0.130,  gravityRadius: 340, supernova: true },
   { tier: 11, name: '블랙홀',    radius: 84,  color: '#02020a', accent: '#7f4dff', glow: 3.0,  density: 0.010,                                       blackhole: true }
 ];
+
+// Mutable copy whose radii get scaled by current difficulty.
+// All consumers read `TIERS[tier].radius` and will see the scaled value.
+export const TIERS: (TierInfo | null)[] = BASE_TIERS.map((t) => (t ? { ...t } : null));
+
+export function applyRadiusScale(scale: number): void {
+  for (let i = 0; i < BASE_TIERS.length; i++) {
+    const base = BASE_TIERS[i];
+    const active = TIERS[i];
+    if (!base || !active) continue;
+    active.radius = base.radius * scale;
+    if (base.gravityRadius != null) active.gravityRadius = base.gravityRadius * scale;
+  }
+}
 
 export const MAX_TIER = 11;
 export const DROP_TIER_MAX = 3;
