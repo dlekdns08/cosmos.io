@@ -41,6 +41,7 @@ interface Challenges {
 }
 
 interface GameState {
+  gameStarted: boolean;
   gameOver: boolean;
   topOccupiedTime: number;
   blackholeActive: boolean;
@@ -89,7 +90,27 @@ for (const btn of diffButtons) {
     if (!id || !(id in DIFFICULTIES)) return;
     setDifficulty(id);
     syncDifficultyUI();
-    restart();
+    if (state.gameStarted) restart();
+  });
+}
+
+const startScreenEl = document.getElementById('start-screen');
+const startCards = Array.from(document.querySelectorAll<HTMLButtonElement>('#start-screen .diff-card'));
+
+function beginGame(id: DifficultyId): void {
+  setDifficulty(id);
+  applyEngineDifficulty(engine);
+  applyUnlocks();
+  syncDifficultyUI();
+  state.gameStarted = true;
+  startScreenEl?.classList.remove('show');
+}
+
+for (const card of startCards) {
+  card.addEventListener('click', () => {
+    const id = card.dataset.diff as DifficultyId | undefined;
+    if (!id || !(id in DIFFICULTIES)) return;
+    beginGame(id);
   });
 }
 
@@ -138,6 +159,7 @@ function applyDrift(bodies: Matter.Body[], nowMs: number): void {
 }
 
 const state: GameState = {
+  gameStarted: false,
   gameOver: false,
   topOccupiedTime: 0,
   blackholeActive: false,
@@ -279,12 +301,12 @@ function getPointerX(e: MouseEvent | TouchEvent): number {
 }
 
 function handleMove(e: MouseEvent | TouchEvent): void {
-  if (state.gameOver) return;
+  if (!state.gameStarted || state.gameOver) return;
   dropper.setX(getPointerX(e));
 }
 
 function handleDrop(e: MouseEvent | TouchEvent): void {
-  if (state.gameOver || state.blackholeActive) return;
+  if (!state.gameStarted || state.gameOver || state.blackholeActive) return;
   synth.ensure();
   if ('touches' in e) e.preventDefault();
   dropper.setX(getPointerX(e));
@@ -307,14 +329,14 @@ canvas.addEventListener('touchmove', (e) => { handleMove(e); e.preventDefault();
 canvas.addEventListener('touchstart', handleDrop, { passive: false });
 
 document.addEventListener('keydown', (e) => {
-  if (state.gameOver) return;
+  if (!state.gameStarted || state.gameOver) return;
   if (e.key === '1') onChargeSelect('charged');
   else if (e.key === '2') onChargeSelect('slow');
   else if (e.key === '3') onChargeSelect('attract');
 });
 
 bigBangBtn.addEventListener('click', () => {
-  if (!state.bigBangAvailable || state.gameOver || state.blackholeActive) return;
+  if (!state.gameStarted || !state.bigBangAvailable || state.gameOver || state.blackholeActive) return;
   state.bigBangCountThisGame += 1;
   state.bigBangAvailable = state.bigBangCountThisGame < state.bigBangMaxThisGame;
   state.bigBangUsedThisGame = true;
@@ -470,7 +492,7 @@ function loop(now: number): void {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
 
-  if (!state.gameOver) {
+  if (state.gameStarted && !state.gameOver) {
     Matter.Engine.update(engine, 1000 / 60);
     const bodies = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
     applyGravity(bodies);
