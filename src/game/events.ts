@@ -1,6 +1,6 @@
 import Matter from 'matter-js';
 import { tierInfo } from '../config/tiers.js';
-import { makeBody, WIDTH, HEIGHT, TOP_LINE_Y } from '../physics/world.js';
+import { makeBody, WIDTH, HEIGHT, topLineY } from '../physics/world.js';
 import type { Dropper } from '../physics/dropper.js';
 
 const SUPERNOVA_RADIUS = 240;
@@ -45,7 +45,8 @@ export function runSupernova(world: Matter.World, supernovaBody: Matter.Body, ca
     const newTier = Math.min(SCATTER_MAX_TIER, b.tier + bonus);
     const info = tierInfo(newTier);
     const nx = info.radius + 20 + Math.random() * (WIDTH - info.radius * 2 - 40);
-    const ny = TOP_LINE_Y + info.radius + 40 + Math.random() * (HEIGHT - TOP_LINE_Y - info.radius * 2 - 80);
+    const tly = topLineY();
+    const ny = tly + info.radius + 40 + Math.random() * (HEIGHT - tly - info.radius * 2 - 80);
     Matter.World.remove(world, b);
     const nb = makeBody(nx, ny, info);
     Matter.Body.setVelocity(nb, {
@@ -105,7 +106,8 @@ export function runBigBang(world: Matter.World, callbacks: BigBangCallbacks): vo
     if (b.label !== 'cosmic' || b.tier == null) continue;
     const info = tierInfo(b.tier);
     const nx = info.radius + 20 + Math.random() * (WIDTH - info.radius * 2 - 40);
-    const ny = TOP_LINE_Y + info.radius + 80 + Math.random() * (HEIGHT - TOP_LINE_Y - info.radius * 2 - 120);
+    const tly = topLineY();
+    const ny = tly + info.radius + 80 + Math.random() * (HEIGHT - tly - info.radius * 2 - 120);
     Matter.Body.setPosition(b, { x: nx, y: ny });
     Matter.Body.setVelocity(b, {
       x: (Math.random() - 0.5) * 16,
