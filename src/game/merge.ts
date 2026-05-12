@@ -31,8 +31,17 @@ export function setupMerge(engine: Matter.Engine, world: Matter.World, callbacks
       const info = tierInfo(newTier);
       const mx = (a.position.x + b.position.x) / 2;
       const my = (a.position.y + b.position.y) / 2;
-      const vx = (a.velocity.x + b.velocity.x) / 2;
-      const vy = (a.velocity.y + b.velocity.y) / 2;
+      let vx = (a.velocity.x + b.velocity.x) / 2;
+      let vy = (a.velocity.y + b.velocity.y) / 2;
+      // Clamp inherited velocity so heavy merged bodies (esp. tier 8+) can't shoot off
+      // from accumulated collision impulses around the moment of merge.
+      const MAX_INHERIT = 4;
+      const speed = Math.hypot(vx, vy);
+      if (speed > MAX_INHERIT) {
+        const k = MAX_INHERIT / speed;
+        vx *= k;
+        vy *= k;
+      }
 
       Matter.World.remove(world, a);
       Matter.World.remove(world, b);
