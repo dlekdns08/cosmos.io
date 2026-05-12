@@ -12,6 +12,8 @@ import { Shake } from './render/shake.js';
 import { Synth } from './audio/synth.js';
 import { HUD, toast } from './ui/hud.js';
 import { GameOverOverlay } from './ui/gameover.js';
+import { LeaderboardPanel } from './ui/leaderboard.js';
+import { NetClient } from './net/client.js';
 
 interface Challenges {
   firstStar: boolean;
@@ -52,6 +54,21 @@ const state: GameState = {
 };
 
 const gameOverOverlay = new GameOverOverlay(() => restart());
+const leaderboard = new LeaderboardPanel();
+const net = new NetClient({
+  onConnect() {
+    leaderboard.setConnected(true);
+  },
+  onDisconnect() {
+    leaderboard.setConnected(false);
+  },
+  onLeaderboard(entries, yourSessionId) {
+    leaderboard.setYourSessionId(yourSessionId);
+    leaderboard.render(entries);
+  },
+});
+leaderboard.setYourSessionId(net.sessionId);
+net.connect();
 
 function maybeChallenge(key: keyof Challenges, label: string, color: string): void {
   if (state.challenges[key]) return;
@@ -196,6 +213,7 @@ function triggerGameOver(): void {
   score.finalize();
   synth.gameover();
   shake.add(20);
+  net.notifyGameOver(score.value);
   setTimeout(() => gameOverOverlay.show(score), 600);
 }
 
@@ -243,6 +261,8 @@ function loop(now: number): void {
   const bodiesForRender = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
   renderer.draw(bodiesForRender, particles, shake, dropper, state.blackholeActive);
   hud.update(score, dropper);
+
+  net.pushScore(score.value, !state.gameOver);
 
   requestAnimationFrame(loop);
 }
