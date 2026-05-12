@@ -168,6 +168,12 @@ setupMerge(engine, world, {
     charge.addMerge(newTier);
     chargePanel.syncFromCharge();
 
+    let dailyChanged = false;
+    if (daily.bump('createTier', 1, { tier: newTier })) dailyChanged = true;
+    if (daily.bump('score', 0, { score: score.value })) dailyChanged = true;
+    if (daily.bump('comboHits', 1, { combo: result.combo })) dailyChanged = true;
+    if (dailyChanged) dailyPanel.render();
+
     // mark tier 5 result as orbit-active
     if (info.orbitBonus) {
       markOrbitActive(body);
