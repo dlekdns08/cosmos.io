@@ -443,6 +443,7 @@ function loop(now: number): void {
     applyGravity(bodies);
     applyOrbitForces(bodies, now);
     applyChargeAttractors(bodies);
+    applyDrift(bodies, now);
     runSlingshot(bodies, () => {
       state.slingshotCount += 1;
       synth.slingshot();
