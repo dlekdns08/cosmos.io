@@ -10,6 +10,7 @@ server/data/
 
 logs/
 .pm2/
+data/
 
 .DS_Store
 *.log
