@@ -2,8 +2,16 @@ import Matter from 'matter-js';
 import { MAX_TIER, tierInfo } from '../config/tiers.js';
 import { makeBody } from '../physics/world.js';
 
+export interface MergeInfo {
+  body: Matter.Body;
+  x: number;
+  y: number;
+  newTier: number;
+  parents: [Matter.Body, Matter.Body];
+}
+
 export interface MergeCallbacks {
-  onMerge?: (body: Matter.Body, x: number, y: number, newTier: number) => void;
+  onMerge?: (info: MergeInfo) => void;
 }
 
 export function setupMerge(engine: Matter.Engine, world: Matter.World, callbacks: MergeCallbacks): void {
@@ -33,7 +41,7 @@ export function setupMerge(engine: Matter.Engine, world: Matter.World, callbacks
       Matter.Body.setVelocity(next, { x: vx, y: vy });
       Matter.World.add(world, next);
 
-      callbacks.onMerge?.(next, mx, my, newTier);
+      callbacks.onMerge?.({ body: next, x: mx, y: my, newTier, parents: [a, b] });
     }
   });
 }
