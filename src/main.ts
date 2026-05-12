@@ -75,11 +75,27 @@ const chargePanel = new ChargePanel(charge, (kind) => onChargeSelect(kind));
 
 const dropper = new Dropper(world, () => synth.drop());
 
+function applyUnlocks(): void {
+  if (meta.hasUnlock('startingSeed5')) dropper.startingSeedMax = 5;
+  else if (meta.hasUnlock('startingSeed4')) dropper.startingSeedMax = 4;
+  else dropper.startingSeedMax = 3;
+
+  if (meta.hasUnlock('chargeRate15')) charge.setRate(1.5);
+  else if (meta.hasUnlock('chargeRate12')) charge.setRate(1.2);
+  else charge.setRate(1);
+}
+
+function maxBigBangs(): number {
+  return meta.hasUnlock('bigBangPlus1') ? 2 : 1;
+}
+
 const state: GameState = {
   gameOver: false,
   topOccupiedTime: 0,
   blackholeActive: false,
   bigBangAvailable: true,
+  bigBangCountThisGame: 0,
+  bigBangMaxThisGame: maxBigBangs(),
   bigBangUsedThisGame: false,
   challenges: {
     firstStar: false,
@@ -92,7 +108,11 @@ const state: GameState = {
   },
   challengeScoreTarget: 100000,
   slingshotCount: 0,
+  blackholesThisGame: 0,
+  firstAchievementsThisGame: 0,
 };
+
+applyUnlocks();
 
 const gameOverOverlay = new GameOverOverlay(() => restart());
 const leaderboard = new LeaderboardPanel();
