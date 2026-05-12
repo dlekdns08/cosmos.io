@@ -343,6 +343,7 @@ function triggerGameOver(): void {
   shake.add(20);
   net.notifyGameOver(score.value);
   const award = meta.awardForGame(score.value, state.blackholesThisGame, state.firstAchievementsThisGame);
+  lastAwardedNp = award.npGained;
   setTimeout(() => {
     gameOverOverlay.show(score, award.npGained);
     if (award.newUnlocks.length) {
@@ -350,9 +351,20 @@ function triggerGameOver(): void {
         .map((id) => UNLOCK_TRACK.find((n) => n.id === id)?.name ?? id)
         .join(', ');
       toast(`해금: ${names}`, '#ff4dc4');
+      applyTheme();
     }
   }, 600);
 }
+
+function applyTheme(): void {
+  let id = 'default';
+  if (daily.streak >= 7) id = 'meteorShower';
+  else if (meta.hasUnlock('themeKarmanian')) id = 'karmanian';
+  else if (meta.hasUnlock('themeAndromeda')) id = 'andromeda';
+  renderer.setTheme(id);
+}
+
+applyTheme();
 
 function restart(): void {
   clearCosmic(world);
@@ -405,6 +417,7 @@ function loop(now: number): void {
       if (state.slingshotCount >= 3) {
         maybeChallenge('threeSlingshots', '슬링샷 3회', '#ffd76b');
       }
+      if (daily.bump('slingshots', 1)) dailyPanel.render();
     });
     dropper.update(dt);
     score.comboDecay(now);
