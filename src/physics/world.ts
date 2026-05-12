@@ -35,9 +35,10 @@ export function setupWorld(): WorldHandle {
 }
 
 export function makeBody(x: number, y: number, tierInfo: TierInfo): Matter.Body {
+  const restitution = tierInfo.tier === 6 ? 0.07 : 0.18;
   const body = Matter.Bodies.circle(x, y, tierInfo.radius, {
-    restitution: 0.18,
-    friction: 0.04,
+    restitution,
+    friction: tierInfo.tier === 6 ? 0.08 : 0.04,
     frictionAir: 0.0015,
     density: tierInfo.density,
     label: 'cosmic',
