@@ -22,6 +22,7 @@ import { applyChargeAttractors, registerAttractDrop, resetChargeAttractors } fro
 import { Meta } from './game/meta.js';
 import { NebulaPanel } from './ui/nebula.js';
 import { UNLOCK_TRACK } from './config/unlocks.js';
+import { Popups } from './render/popups.js';
 
 interface Challenges {
   firstStar: boolean;
@@ -64,6 +65,7 @@ const shake = new Shake();
 const synth = new Synth();
 const score = new Score();
 const hud = new HUD(renderer);
+const popups = new Popups();
 
 const charge = new CosmicCharge({
   onReady() {
@@ -161,6 +163,9 @@ setupMerge(engine, world, {
       markOrbitActive(body);
     }
 
+    const popupSize = 14 + newTier * 1.5;
+    const popupColor = result.multiplier >= 4 ? '#ffe066' : result.multiplier >= 2 ? '#ff9d3a' : info.color;
+    popups.emit(`+${result.gained.toLocaleString()}`, x, y - 8, { size: popupSize, color: popupColor });
     const pCount = 6 + newTier * 2;
     particles.emit(x, y, pCount, info.color, { speed: 3 + newTier * 0.3, life: 0.8, size: 1 + newTier * 0.15 });
     if (newTier >= 6) {
@@ -320,23 +325,38 @@ function triggerGameOver(): void {
   synth.gameover();
   shake.add(20);
   net.notifyGameOver(score.value);
-  setTimeout(() => gameOverOverlay.show(score), 600);
+  const award = meta.awardForGame(score.value, state.blackholesThisGame, state.firstAchievementsThisGame);
+  setTimeout(() => {
+    gameOverOverlay.show(score, award.npGained);
+    if (award.newUnlocks.length) {
+      const names = award.newUnlocks
+        .map((id) => UNLOCK_TRACK.find((n) => n.id === id)?.name ?? id)
+        .join(', ');
+      toast(`해금: ${names}`, '#ff4dc4');
+    }
+  }, 600);
 }
 
 function restart(): void {
   clearCosmic(world);
   particles.reset();
+  popups.reset();
   dropper.reset();
   score.reset();
   charge.reset();
   chargePanel.syncFromCharge();
   resetChargeAttractors();
+  applyUnlocks();
   state.gameOver = false;
   state.topOccupiedTime = 0;
   state.blackholeActive = false;
   state.bigBangAvailable = true;
+  state.bigBangCountThisGame = 0;
+  state.bigBangMaxThisGame = maxBigBangs();
   state.bigBangUsedThisGame = false;
   state.slingshotCount = 0;
+  state.blackholesThisGame = 0;
+  state.firstAchievementsThisGame = 0;
   state.challenges = {
     firstStar: false,
     fiveCombo: false,
@@ -384,10 +404,12 @@ function loop(now: number): void {
   }
 
   particles.update(dt);
+  popups.update(dt);
   shake.update(dt);
 
   const bodiesForRender = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
   renderer.draw(bodiesForRender, particles, shake, dropper, state.blackholeActive);
+  popups.draw(canvas!.getContext('2d')!);
   hud.update(score, dropper);
 
   net.pushScore(score.value, !state.gameOver);
