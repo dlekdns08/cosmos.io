@@ -19,6 +19,9 @@ import { runSlingshot, wasJustSlung } from './game/slingshot.js';
 import { CosmicCharge, type ChargeKind } from './game/cosmicCharge.js';
 import { ChargePanel } from './ui/charge.js';
 import { applyChargeAttractors, registerAttractDrop, resetChargeAttractors } from './game/chargeEffects.js';
+import { Meta } from './game/meta.js';
+import { NebulaPanel } from './ui/nebula.js';
+import { UNLOCK_TRACK } from './config/unlocks.js';
 
 interface Challenges {
   firstStar: boolean;
@@ -35,10 +38,14 @@ interface GameState {
   topOccupiedTime: number;
   blackholeActive: boolean;
   bigBangAvailable: boolean;
+  bigBangCountThisGame: number;
+  bigBangMaxThisGame: number;
   bigBangUsedThisGame: boolean;
   challenges: Challenges;
   challengeScoreTarget: number;
   slingshotCount: number;
+  blackholesThisGame: number;
+  firstAchievementsThisGame: number;
 }
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
