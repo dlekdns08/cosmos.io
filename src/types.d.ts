@@ -4,5 +4,8 @@ declare namespace Matter {
     _merged?: boolean;
     _spawnT?: number;
     _phaseActive?: boolean;
+    _orbitUntil?: number;
+    _slingshotUntil?: number;
+    _chargeMod?: 'charged' | 'slow' | 'attract' | null;
   }
 }
