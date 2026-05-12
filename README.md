@@ -140,7 +140,29 @@ docker compose down -v            # ./data 까지 모두 제거
 
 ### 데이터 영속성
 
-SQLite DB는 호스트 `./data/cosmos.db`에 저장 (bind mount). `docker compose down` 해도 보존되며, 호스트에서 직접 백업 가능.
+SQLite DB는 Docker named volume `cosmos-data`에 저장. `docker compose up -d --build`, `docker compose restart`, `docker compose down` 모두 데이터 유지. **`down -v` 만이 데이터까지 삭제**.
+
+> bind mount(`./data:/data`)를 쓰면 runner 다음 빌드 시 `actions/checkout`이 root 소유 파일을 못 지워서 워크플로우가 실패함 (`EACCES: permission denied`). 그래서 named volume을 쓴다.
+
+#### 백업 / 복원
+
+```bash
+# 컨테이너 정지 없이 백업
+docker run --rm -v cosmos-data:/data -v "$(pwd)":/backup busybox \
+  cp /data/cosmos.db /backup/cosmos.db.bak
+
+# 복원 (컨테이너 정지 후)
+docker compose stop
+docker run --rm -v cosmos-data:/data -v "$(pwd)":/backup busybox \
+  cp /backup/cosmos.db.bak /data/cosmos.db
+docker compose start
+```
+
+#### 볼륨 직접 확인 (Linux 호스트 기준)
+
+```bash
+sudo ls /var/lib/docker/volumes/cosmosio_cosmos-data/_data
+```
 
 ### 환경 변수 (compose에서 override)
 
