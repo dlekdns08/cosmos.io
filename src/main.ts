@@ -71,6 +71,7 @@ const dailyPanel = new DailyPanel(daily);
 let lastAwardedNp = 0;
 shareBtn.addEventListener('click', () => downloadShareCard(score, lastAwardedNp));
 
+loadDifficulty();
 const { engine, world } = setupWorld();
 const renderer = new Renderer(canvas);
 const particles = new Particles();
@@ -323,12 +324,13 @@ function updateBigBangVisibility(forceHide: boolean): void {
 function checkTopOccupation(bodies: Matter.Body[], dt: number): void {
   let occupied = false;
   const now = performance.now();
+  const tly = topLineY();
   for (const b of bodies) {
     if (b.tier == null) continue;
     const info = TIERS[b.tier];
     if (!info) continue;
     if (now - (b._spawnT ?? 0) < 1500) continue;
-    if (b.position.y - info.radius < TOP_LINE_Y - 6 && Math.abs(b.velocity.y) < 1.2) {
+    if (b.position.y - info.radius < tly - 6 && Math.abs(b.velocity.y) < 1.2) {
       occupied = true;
       break;
     }
