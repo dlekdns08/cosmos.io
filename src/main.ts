@@ -496,6 +496,12 @@ function loop(now: number): void {
   if (state.gameStarted && !state.gameOver) {
     Matter.Engine.update(engine, 1000 / 60);
     const bodies = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
+    // Anchor stars: tier 8/9/10 can never move upward — prevents small bodies from shoving them across the top line.
+    for (const b of bodies) {
+      if (b.tier != null && b.tier >= 8 && b.tier < 11 && b.velocity.y < 0) {
+        Matter.Body.setVelocity(b, { x: b.velocity.x * 0.6, y: 0 });
+      }
+    }
     applyGravity(bodies);
     applyOrbitForces(bodies, now);
     applyChargeAttractors(bodies);
