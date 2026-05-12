@@ -50,7 +50,12 @@ interface GameState {
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 const bigBangBtn = document.getElementById('bigbang') as HTMLButtonElement | null;
-if (!canvas || !bigBangBtn) throw new Error('Required DOM elements missing');
+const openNebulaBtn = document.getElementById('open-nebula') as HTMLButtonElement | null;
+if (!canvas || !bigBangBtn || !openNebulaBtn) throw new Error('Required DOM elements missing');
+
+const meta = new Meta();
+const nebula = new NebulaPanel();
+openNebulaBtn.addEventListener('click', () => nebula.show(meta));
 
 const { engine, world } = setupWorld();
 const renderer = new Renderer(canvas);
