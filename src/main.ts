@@ -27,7 +27,7 @@ import { NebulaPanel } from './ui/nebula.js';
 import { UNLOCK_TRACK } from './config/unlocks.js';
 import { Popups } from './render/popups.js';
 import { AIBot } from './ai/bot.js';
-import { HeuristicPolicy } from './ai/heuristic.js';
+import { CompositePolicy, MODE_LABEL, type CompositeMode } from './ai/compositePolicy.js';
 import { DailyChallenges } from './game/dailyChallenge.js';
 import { DailyPanel } from './ui/daily.js';
 import { downloadShareCard } from './ui/shareCard.js';
@@ -414,6 +414,7 @@ function triggerGameOver(): void {
   state.gameOver = true;
   dropper.enabled = false;
   aiBot.disable();
+  aiPolicy.save();
   score.finalize();
   synth.gameover();
   shake.add(20);
@@ -445,15 +446,53 @@ syncDifficultyUI();
 
 // --- AI bot ---
 const aiBadgeEl = document.getElementById('ai-badge');
-const aiBot = new AIBot(new HeuristicPolicy(), {
+const aiStatusEl = document.getElementById('ai-status');
+const aiPolicyNameEl = document.getElementById('ai-policy-name');
+const aiSamplesEl = document.getElementById('ai-samples');
+const aiLossEl = document.getElementById('ai-loss');
+const aiResetEl = document.getElementById('ai-reset');
+
+const AI_MODE_KEY = 'cosmos.ai.mode';
+const savedMode = (localStorage.getItem(AI_MODE_KEY) as CompositeMode | null) ?? 'training';
+const initialMode: CompositeMode = savedMode === 'heuristic' || savedMode === 'training' || savedMode === 'neural'
+  ? savedMode : 'training';
+
+const aiPolicy = new CompositePolicy(initialMode);
+const aiBot = new AIBot(aiPolicy, {
   dropper,
   getBodies: () => Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic'),
   drop: () => performDrop(),
 });
 
+function syncAiStatusUI(): void {
+  if (!aiPolicyNameEl || !aiSamplesEl || !aiLossEl) return;
+  aiPolicyNameEl.textContent = MODE_LABEL[aiPolicy.mode];
+  aiSamplesEl.textContent = `${aiPolicy.samples.toLocaleString()} 샘플`;
+  aiLossEl.textContent = aiPolicy.samples > 0
+    ? `loss ${aiPolicy.emaLoss.toFixed(2)}`
+    : 'loss —';
+}
+
+aiPolicyNameEl?.addEventListener('click', () => {
+  const order: CompositeMode[] = ['heuristic', 'training', 'neural'];
+  const next = order[(order.indexOf(aiPolicy.mode) + 1) % order.length];
+  aiPolicy.setMode(next);
+  localStorage.setItem(AI_MODE_KEY, next);
+  syncAiStatusUI();
+});
+
+aiResetEl?.addEventListener('click', () => {
+  if (!confirm('학습된 NN 가중치를 초기화할까요?')) return;
+  aiPolicy.resetNN();
+  syncAiStatusUI();
+});
+
+syncAiStatusUI();
+
 function setAiBadge(visible: boolean): void {
-  if (!aiBadgeEl) return;
-  aiBadgeEl.classList.toggle('hidden', !visible);
+  if (aiBadgeEl) aiBadgeEl.classList.toggle('hidden', !visible);
+  if (aiStatusEl) aiStatusEl.classList.toggle('hidden', !visible);
+  if (visible) syncAiStatusUI();
 }
 
 const aiDemoBtn = document.getElementById('ai-demo-btn') as HTMLButtonElement | null;
@@ -651,6 +690,13 @@ function loop(now: number): void {
     });
     dropper.update(dt);
     aiBot.update(now);
+    if (state.aiMode) {
+      const f = Math.floor(now / 250);
+      if (f !== (state as unknown as { _lastAiStatusF: number })._lastAiStatusF) {
+        (state as unknown as { _lastAiStatusF: number })._lastAiStatusF = f;
+        syncAiStatusUI();
+      }
+    }
     score.comboDecay(now);
     checkTopOccupation(bodies, dt);
     updateBigBangVisibility(false);
