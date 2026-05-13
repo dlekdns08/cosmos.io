@@ -496,26 +496,22 @@ function loop(now: number): void {
   if (state.gameStarted && !state.gameOver) {
     Matter.Engine.update(engine, 1000 / 60);
     const bodies = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
-    // Anchor stars: tier 8/9/10 are locked against upward drift.
-    // Tracks the lowest Y the body has reached (`_anchorY`) and snaps back to it any frame
-    // the body climbs above that line — kills upward velocity AND undoes the position step,
-    // so accumulated impulses from collisions can't drift the body across the top line.
+    // Anchor stars: tier 8/9/10 are locked against upward drift AND clamped inside the side walls.
+    // Heavy bodies need a hard X clamp because matter's iterative position correction
+    // can leave a few px of overlap when a tier 8+ is pinned against a wall by other bodies.
     for (const b of bodies) {
       if (b.tier == null || b.tier < 8 || b.tier >= 11) continue;
       const info = TIERS[b.tier];
       if (!info) continue;
 
-      // Safety net: if physics glitched the position out of the world (NaN, off-screen),
-      // restore to a safe central spot so the body doesn't vanish.
       const px = b.position.x;
       const py = b.position.y;
+
+      // Safety net: position glitched (NaN, far off-world) → restore to safe centred spot.
       const offWorld =
-        !Number.isFinite(px) ||
-        !Number.isFinite(py) ||
-        py > HEIGHT + 100 ||
-        py < -400 ||
-        px < -150 ||
-        px > WIDTH + 150;
+        !Number.isFinite(px) || !Number.isFinite(py) ||
+        py > HEIGHT + 100 || py < -400 ||
+        px < -150 || px > WIDTH + 150;
       if (offWorld) {
         const safeX = Math.min(Math.max(WIDTH / 2, info.radius + 10), WIDTH - info.radius - 10);
         const safeY = HEIGHT - info.radius - 10;
@@ -525,12 +521,33 @@ function loop(now: number): void {
         continue;
       }
 
-      if (b._anchorY == null) b._anchorY = py;
-      if (py > b._anchorY) {
-        b._anchorY = py;
-      } else if (py < b._anchorY) {
-        Matter.Body.setPosition(b, { x: px, y: b._anchorY });
-        Matter.Body.setVelocity(b, { x: b.velocity.x * 0.4, y: 0 });
+      // Cap natural floor rest so anchor can't drift below the floor even if a collision
+      // momentarily pushed the body into it (would otherwise trap heavies inside the floor).
+      const naturalMaxY = HEIGHT - info.radius - 4;
+      const minX = info.radius + 2;
+      const maxX = WIDTH - info.radius - 2;
+
+      // Compute target position
+      let nx = px;
+      let nvx = b.velocity.x;
+      if (px < minX) { nx = minX; nvx = Math.max(0, nvx); }
+      else if (px > maxX) { nx = maxX; nvx = Math.min(0, nvx); }
+
+      if (b._anchorY == null) b._anchorY = Math.min(py, naturalMaxY);
+      else b._anchorY = Math.min(b._anchorY, naturalMaxY);
+      if (py > b._anchorY) b._anchorY = Math.min(py, naturalMaxY);
+
+      let ny = py;
+      let nvy = b.velocity.y;
+      if (py < b._anchorY) {
+        ny = b._anchorY;
+        nvy = 0;
+        nvx *= 0.4;
+      }
+
+      if (nx !== px || ny !== py) Matter.Body.setPosition(b, { x: nx, y: ny });
+      if (nvx !== b.velocity.x || nvy !== b.velocity.y) {
+        Matter.Body.setVelocity(b, { x: nvx, y: nvy });
       }
     }
     applyGravity(bodies);
