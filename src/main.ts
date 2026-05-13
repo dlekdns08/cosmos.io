@@ -606,6 +606,7 @@ function restart(): void {
   applyUnlocks();
   aiBot.reset();
   if (state.aiMode) aiBot.enable();
+  stats.startGame();
   state.gameStarted = true;
   state.gameOver = false;
   state.topOccupiedTime = 0;
