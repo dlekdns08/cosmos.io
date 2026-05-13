@@ -26,6 +26,8 @@ import { Meta } from './game/meta.js';
 import { NebulaPanel } from './ui/nebula.js';
 import { UNLOCK_TRACK } from './config/unlocks.js';
 import { Popups } from './render/popups.js';
+import { AIBot } from './ai/bot.js';
+import { HeuristicPolicy } from './ai/heuristic.js';
 import { DailyChallenges } from './game/dailyChallenge.js';
 import { DailyPanel } from './ui/daily.js';
 import { downloadShareCard } from './ui/shareCard.js';
