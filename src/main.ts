@@ -641,9 +641,8 @@ function loop(now: number): void {
   if (state.gameStarted && !state.gameOver) {
     Matter.Engine.update(engine, 1000 / 60);
     const bodies = Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic');
-    // Anchor stars: tier 8/9/10 are locked against upward drift AND clamped inside the side walls.
-    // Heavy bodies need a hard X clamp because matter's iterative position correction
-    // can leave a few px of overlap when a tier 8+ is pinned against a wall by other bodies.
+    // Anchor stars: tier 8/9/10 are hard-clamped to the playfield on all four sides AND
+    // locked against upward drift via `_anchorY` (only allowed to descend, never rise).
     for (const b of bodies) {
       if (b.tier == null || b.tier < 8 || b.tier >= 11) continue;
       const info = TIERS[b.tier];
@@ -652,7 +651,7 @@ function loop(now: number): void {
       const px = b.position.x;
       const py = b.position.y;
 
-      // Safety net: position glitched (NaN, far off-world) → restore to safe centred spot.
+      // Safety net: NaN / extreme off-world → restore.
       const offWorld =
         !Number.isFinite(px) || !Number.isFinite(py) ||
         py > HEIGHT + 100 || py < -400 ||
@@ -666,25 +665,28 @@ function loop(now: number): void {
         continue;
       }
 
-      // Cap natural floor rest so anchor can't drift below the floor even if a collision
-      // momentarily pushed the body into it (would otherwise trap heavies inside the floor).
-      const naturalMaxY = HEIGHT - info.radius - 4;
       const minX = info.radius + 2;
       const maxX = WIDTH - info.radius - 2;
+      const minY = topLineY() + info.radius + 5;
+      const maxY = HEIGHT - info.radius - 4;
 
-      // Compute target position
+      // Hard 4-side clamp first.
       let nx = px;
-      let nvx = b.velocity.x;
-      if (px < minX) { nx = minX; nvx = Math.max(0, nvx); }
-      else if (px > maxX) { nx = maxX; nvx = Math.min(0, nvx); }
-
-      if (b._anchorY == null) b._anchorY = Math.min(py, naturalMaxY);
-      else b._anchorY = Math.min(b._anchorY, naturalMaxY);
-      if (py > b._anchorY) b._anchorY = Math.min(py, naturalMaxY);
-
       let ny = py;
+      let nvx = b.velocity.x;
       let nvy = b.velocity.y;
-      if (py < b._anchorY) {
+      if (nx < minX) { nx = minX; nvx = Math.max(0, nvx); }
+      else if (nx > maxX) { nx = maxX; nvx = Math.min(0, nvx); }
+      if (ny < minY) { ny = minY; nvy = Math.max(0, nvy); }
+      else if (ny > maxY) { ny = maxY; nvy = Math.min(0, nvy); }
+
+      // Anchor: maintain the lowest Y reached (so collisions can't drift the star upward).
+      if (b._anchorY == null) b._anchorY = ny;
+      // Anchor itself stays within the valid Y range so it never traps the body inside a wall.
+      if (b._anchorY < minY) b._anchorY = minY;
+      else if (b._anchorY > maxY) b._anchorY = maxY;
+      if (ny > b._anchorY) b._anchorY = ny;
+      else if (ny < b._anchorY) {
         ny = b._anchorY;
         nvy = 0;
         nvx *= 0.4;
@@ -696,17 +698,16 @@ function loop(now: number): void {
       }
     }
 
-    // Manual de-overlap: tier 8+ stars can't share space with lighter bodies.
-    // Matter's iterative position correction often leaves a few px of overlap when a
-    // body is being pulled into the star — push the lighter body out radially and kill
-    // its inward velocity component.
+    // Manual de-overlap: tier 8+ stars can't share space with anything else.
+    // - vs lighter bodies (tier <8): push the lighter body fully out, kill its inward velocity.
+    // - vs other stars (8/9/10): split overlap, prefer horizontal direction (anchor blocks vertical).
     for (const star of bodies) {
       if (star.tier == null || star.tier < 8 || star.tier >= 11) continue;
       const sr = star.circleRadius;
       if (!sr) continue;
       for (const other of bodies) {
         if (other === star) continue;
-        if (other.tier == null || other.tier >= 8) continue;
+        if (other.tier == null) continue;
         const or = other.circleRadius;
         if (!or) continue;
         const dx = other.position.x - star.position.x;
@@ -716,18 +717,47 @@ function loop(now: number): void {
         if (d2 >= minD * minD || d2 < 0.0001) continue;
         const d = Math.sqrt(d2);
         const overlap = minD - d;
-        const ux = dx / d;
-        const uy = dy / d;
-        Matter.Body.setPosition(other, {
-          x: other.position.x + ux * overlap,
-          y: other.position.y + uy * overlap,
-        });
-        const radialV = other.velocity.x * ux + other.velocity.y * uy;
-        if (radialV < 0) {
-          Matter.Body.setVelocity(other, {
-            x: other.velocity.x - radialV * ux,
-            y: other.velocity.y - radialV * uy,
+        const otherIsStar = other.tier >= 8 && other.tier < 11;
+
+        if (otherIsStar) {
+          // Star-star — anchor blocks vertical, so prefer horizontal separation.
+          let ux = dx / d;
+          let uy = dy / d;
+          if (Math.abs(ux) < 0.3) {
+            // Mostly vertical overlap → force horizontal direction (toward the side with more room).
+            ux = star.position.x < other.position.x ? -1 : 1;
+            uy = 0;
+          } else {
+            // Slight horizontal already — make it pure horizontal so anchor doesn't fight us.
+            uy = 0;
+            ux = ux > 0 ? 1 : -1;
+          }
+          const half = overlap / 2 + 0.5;
+          const starMinX = sr + 2;
+          const starMaxX = WIDTH - sr - 2;
+          const otherMinX = or + 2;
+          const otherMaxX = WIDTH - or - 2;
+          const sNewX = Math.max(starMinX, Math.min(starMaxX, star.position.x - ux * half));
+          const oNewX = Math.max(otherMinX, Math.min(otherMaxX, other.position.x + ux * half));
+          Matter.Body.setPosition(star, { x: sNewX, y: star.position.y });
+          Matter.Body.setPosition(other, { x: oNewX, y: other.position.y });
+          Matter.Body.setVelocity(star, { x: 0, y: Math.max(0, star.velocity.y) });
+          Matter.Body.setVelocity(other, { x: 0, y: Math.max(0, other.velocity.y) });
+        } else {
+          // Star vs lighter body — push lighter all the way out.
+          const ux = dx / d;
+          const uy = dy / d;
+          Matter.Body.setPosition(other, {
+            x: other.position.x + ux * overlap,
+            y: other.position.y + uy * overlap,
           });
+          const radialV = other.velocity.x * ux + other.velocity.y * uy;
+          if (radialV < 0) {
+            Matter.Body.setVelocity(other, {
+              x: other.velocity.x - radialV * ux,
+              y: other.velocity.y - radialV * uy,
+            });
+          }
         }
       }
     }
