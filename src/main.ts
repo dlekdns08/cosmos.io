@@ -241,9 +241,11 @@ setupMerge(engine, world, {
     const isCharge = parents.some((p) => p._chargeMod === 'charged' || p._chargeMod === 'slow' || p._chargeMod === 'attract');
 
     const result = score.addMerge(newTier, { orbit: isOrbit, slingshot: isSling, charge: isCharge });
-    synth.merge(newTier);
+    synth.merge(newTier, result.combo);
     charge.addMerge(newTier);
     chargePanel.syncFromCharge();
+    stats.onMerge(newTier, result.combo);
+    if (newTier === 2) tutorial.show('firstMerge');
 
     let dailyChanged = false;
     if (daily.bump('createTier', 1, { tier: newTier })) dailyChanged = true;
@@ -267,7 +269,10 @@ setupMerge(engine, world, {
     if (isOrbit) particles.emit(x, y, 8, '#ffe066', { speed: 5, life: 0.7, size: 1.5 });
     if (isSling) particles.ring(x, y, 16, '#ffd76b', info.radius * 0.5, { speed: 8, life: 0.7, size: 2 });
 
-    if (newTier === 8) maybeChallenge('firstStar', '첫 항성 탄생', '#ffd96b');
+    if (newTier === 8) {
+      maybeChallenge('firstStar', '첫 항성 탄생', '#ffd96b');
+      tutorial.show('firstStar');
+    }
     if (result.combo >= 4.5) maybeChallenge('fiveCombo', '5 콤보 달성', '#ffe066');
 
     if (newTier === 10) {
