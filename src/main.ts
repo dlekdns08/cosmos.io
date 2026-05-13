@@ -382,6 +382,7 @@ bigBangBtn.addEventListener('click', () => {
   state.bigBangUsedThisGame = true;
   state.topOccupiedTime = 0;
   score.countBigBang();
+  stats.onBigBang();
   synth.bigbang();
   shake.add(28);
   charge.fillFull();
@@ -410,6 +411,7 @@ function updateBigBangVisibility(forceHide: boolean): void {
   if (state.topOccupiedTime > 1.2 && !state.gameOver && !state.blackholeActive) {
     bigBangBtn!.classList.add('show');
     bigBangBtn!.disabled = false;
+    tutorial.show('bigBangPrompt');
   } else {
     bigBangBtn!.classList.remove('show');
   }
