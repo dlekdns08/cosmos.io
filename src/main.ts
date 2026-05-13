@@ -276,6 +276,8 @@ setupMerge(engine, world, {
     if (result.combo >= 4.5) maybeChallenge('fiveCombo', '5 콤보 달성', '#ffe066');
 
     if (newTier === 10) {
+      stats.onSupernova();
+      tutorial.show('firstSupernova');
       runSupernova(world, body, {
         onSupernova(cx, cy, bonus) {
           score.add(bonus);
@@ -290,6 +292,8 @@ setupMerge(engine, world, {
 
     if (newTier === 11) {
       maybeChallenge('blackhole', '블랙홀 생성', '#7f4dff');
+      tutorial.show('firstBlackhole');
+      stats.onBlackhole();
       if (!state.bigBangUsedThisGame) {
         maybeChallenge('blackholeNoBigBang', '빅뱅 없이 블랙홀', '#ff4dc4');
       }
