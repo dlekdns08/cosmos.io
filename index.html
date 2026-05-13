@@ -862,7 +862,23 @@
     <button id="side-toggle" class="side-toggle" aria-label="패널 토글">
       <span class="icon">≡</span><span class="text">패널</span>
     </button>
+    <button id="bgm-toggle" class="bgm-toggle" aria-label="BGM 토글" title="BGM 켜기/끄기">
+      <span id="bgm-icon">♪</span>
+    </button>
     <div class="backdrop" id="side-backdrop"></div>
+    <div id="tutorial-host"></div>
+    <div id="stats-modal">
+      <div class="stats-card">
+        <header>
+          <h2>플레이 통계</h2>
+          <div class="stats-actions">
+            <button id="stats-reset" class="ghost">초기화</button>
+            <button id="stats-close" class="ghost">닫기</button>
+          </div>
+        </header>
+        <div class="stats-grid" id="stats-grid"></div>
+      </div>
+    </div>
     <div id="start-screen" class="show">
       <div class="start-card">
         <h2>COSMOS</h2>
