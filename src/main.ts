@@ -305,6 +305,7 @@ function getPointerX(e: MouseEvent | TouchEvent): number {
 }
 
 function handleMove(e: MouseEvent | TouchEvent): void {
+  if (state.aiMode) return;
   if (!state.gameStarted || state.gameOver) return;
   dropper.setX(getPointerX(e));
 }
