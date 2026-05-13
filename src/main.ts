@@ -309,11 +309,8 @@ function handleMove(e: MouseEvent | TouchEvent): void {
   dropper.setX(getPointerX(e));
 }
 
-function handleDrop(e: MouseEvent | TouchEvent): void {
+function performDrop(): void {
   if (!state.gameStarted || state.gameOver || state.blackholeActive) return;
-  synth.ensure();
-  if ('touches' in e) e.preventDefault();
-  dropper.setX(getPointerX(e));
   const modifier = charge.consume();
   const body = dropper.drop(modifier);
   chargePanel.syncFromCharge();
@@ -325,6 +322,15 @@ function handleDrop(e: MouseEvent | TouchEvent): void {
     }
     if (daily.bump('charges', 1)) dailyPanel.render();
   }
+}
+
+function handleDrop(e: MouseEvent | TouchEvent): void {
+  if (state.aiMode) return;
+  if (!state.gameStarted || state.gameOver || state.blackholeActive) return;
+  synth.ensure();
+  if ('touches' in e) e.preventDefault();
+  dropper.setX(getPointerX(e));
+  performDrop();
 }
 
 canvas.addEventListener('mousemove', handleMove);
