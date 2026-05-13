@@ -450,6 +450,7 @@ function triggerGameOver(): void {
   net.notifyGameOver(score.value);
   const award = meta.awardForGame(score.value, state.blackholesThisGame, state.firstAchievementsThisGame);
   lastAwardedNp = award.npGained;
+  stats.endGame(score.value, award.npGained);
   setTimeout(() => {
     gameOverOverlay.show(score, award.npGained);
     if (award.newUnlocks.length) {
