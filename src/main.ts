@@ -454,6 +454,30 @@ function applyTheme(): void {
 applyTheme();
 syncDifficultyUI();
 
+// --- BGM toggle ---
+const BGM_KEY = 'cosmos.bgm.on';
+const bgmBtn = document.getElementById('bgm-toggle') as HTMLButtonElement | null;
+const bgmIcon = document.getElementById('bgm-icon');
+let bgmOn = localStorage.getItem(BGM_KEY) === '1';
+function syncBgmUI(): void {
+  if (!bgmBtn) return;
+  bgmBtn.classList.toggle('active', bgmOn);
+  if (bgmIcon) bgmIcon.textContent = bgmOn ? '♫' : '♪';
+  bgmBtn.title = bgmOn ? 'BGM 끄기' : 'BGM 켜기';
+}
+bgmBtn?.addEventListener('click', () => {
+  bgmOn = !bgmOn;
+  localStorage.setItem(BGM_KEY, bgmOn ? '1' : '0');
+  if (bgmOn) {
+    synth.ensure();
+    synth.bgmStart();
+  } else {
+    synth.bgmStop();
+  }
+  syncBgmUI();
+});
+syncBgmUI();
+
 // --- AI bot ---
 const aiBadgeEl = document.getElementById('ai-badge');
 const aiStatusEl = document.getElementById('ai-status');
