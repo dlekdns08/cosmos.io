@@ -145,6 +145,7 @@ const charge = new CosmicCharge({
   onReady() {
     synth.chargeReady();
     toast('차지 100% — 1·2·3 선택', '#7f4dff');
+    tutorial.show('firstChargeReady');
   },
 });
 const chargePanel = new ChargePanel(charge, (kind) => onChargeSelect(kind));
