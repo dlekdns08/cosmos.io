@@ -26,6 +26,7 @@ export function applyGravity(bodies: Matter.Body[]): void {
 
     let fx = 0;
     let fy = 0;
+    const bRadius = b.circleRadius ?? 0;
     for (const a of attractors) {
       if (a.body === b) continue;
       const dx = a.body.position.x - b.position.x;
@@ -33,8 +34,12 @@ export function applyGravity(bodies: Matter.Body[]): void {
       const d2 = dx * dx + dy * dy;
       if (d2 > a.r2 || d2 < 1) continue;
       const d = Math.sqrt(d2);
+      // Stop pulling once we're at (or inside) contact range — otherwise gravity keeps
+      // shoving the body into the attractor's surface, faster than matter can resolve the overlap.
+      const contactD = (a.body.circleRadius ?? 0) + bRadius + 4;
+      if (d <= contactD) continue;
       const fall = 1 - d2 / a.r2;
-      // Softened 1/d to avoid runaway forces when a body is right next to (or inside) the attractor.
+      // Softened 1/d to avoid runaway forces when a body is just outside contact range.
       const softD = Math.max(d, 25);
       const force = (a.g * b.mass * fall) / softD;
       fx += force * dx;
