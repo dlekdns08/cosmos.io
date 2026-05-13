@@ -44,6 +44,7 @@ interface Challenges {
 
 interface GameState {
   gameStarted: boolean;
+  aiMode: boolean;
   gameOver: boolean;
   topOccupiedTime: number;
   blackholeActive: boolean;
