@@ -93,6 +93,11 @@ for (const btn of diffButtons) {
     if (!id || !(id in DIFFICULTIES)) return;
     setDifficulty(id);
     syncDifficultyUI();
+    // Picking a difficulty on the game-over overlay implies the human is taking over.
+    if (state.aiMode) {
+      state.aiMode = false;
+      setAiBadge(false);
+    }
     if (state.gameStarted) restart();
   });
 }
@@ -408,6 +413,7 @@ function triggerGameOver(): void {
   if (state.gameOver) return;
   state.gameOver = true;
   dropper.enabled = false;
+  aiBot.disable();
   score.finalize();
   synth.gameover();
   shake.add(20);
@@ -506,6 +512,8 @@ function restart(): void {
   chargePanel.syncFromCharge();
   resetChargeAttractors();
   applyUnlocks();
+  aiBot.reset();
+  if (state.aiMode) aiBot.enable();
   state.gameStarted = true;
   state.gameOver = false;
   state.topOccupiedTime = 0;
