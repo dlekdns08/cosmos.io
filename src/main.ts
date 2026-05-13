@@ -437,6 +437,38 @@ function applyTheme(): void {
 applyTheme();
 syncDifficultyUI();
 
+// --- AI bot ---
+const aiBadgeEl = document.getElementById('ai-badge');
+const aiBot = new AIBot(new HeuristicPolicy(), {
+  dropper,
+  getBodies: () => Matter.Composite.allBodies(world).filter((b) => b.label === 'cosmic'),
+  drop: () => performDrop(),
+});
+
+function setAiBadge(visible: boolean): void {
+  if (!aiBadgeEl) return;
+  aiBadgeEl.classList.toggle('hidden', !visible);
+}
+
+const aiDemoBtn = document.getElementById('ai-demo-btn') as HTMLButtonElement | null;
+aiDemoBtn?.addEventListener('click', () => {
+  const id = (aiDemoBtn.dataset.diff as DifficultyId | undefined) ?? 'normal';
+  if (!(id in DIFFICULTIES)) return;
+  state.aiMode = true;
+  setAiBadge(true);
+  beginGame(id);
+  aiBot.enable();
+});
+
+// User-pick on the start-screen diff cards must turn AI mode OFF (human play).
+for (const card of startCards) {
+  card.addEventListener('click', () => {
+    state.aiMode = false;
+    setAiBadge(false);
+    aiBot.disable();
+  });
+}
+
 const sideToggleBtn = document.getElementById('side-toggle');
 const sideBackdrop = document.getElementById('side-backdrop');
 const SIDE_HIDDEN_KEY = 'cosmos.sideHidden';
@@ -610,6 +642,7 @@ function loop(now: number): void {
       if (daily.bump('slingshots', 1)) dailyPanel.render();
     });
     dropper.update(dt);
+    aiBot.update(now);
     score.comboDecay(now);
     checkTopOccupation(bodies, dt);
     updateBigBangVisibility(false);
