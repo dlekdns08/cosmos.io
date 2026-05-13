@@ -339,9 +339,13 @@ function performDrop(): void {
   if (!state.gameStarted || state.gameOver || state.blackholeActive) return;
   const modifier = charge.consume();
   const body = dropper.drop(modifier);
+  if (!body) return;
   chargePanel.syncFromCharge();
-  if (body && modifier) {
+  stats.onDrop();
+  tutorial.show('firstDrop');
+  if (modifier) {
     synth.chargeUse(modifier);
+    stats.onChargeUsed();
     if (modifier === 'attract') registerAttractDrop(body);
     if (state.challenges.fiveCharges === false && charge.usedCount >= 5) {
       maybeChallenge('fiveCharges', '코스믹 차지 5회', '#7f4dff');
@@ -727,6 +731,7 @@ function loop(now: number): void {
     runSlingshot(bodies, () => {
       state.slingshotCount += 1;
       synth.slingshot();
+      stats.onSlingshot();
       if (state.slingshotCount >= 3) {
         maybeChallenge('threeSlingshots', '슬링샷 3회', '#ffd76b');
       }
