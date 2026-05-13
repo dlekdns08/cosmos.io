@@ -365,6 +365,62 @@
       50% { box-shadow: 0 0 22px rgba(255,77,196,0.7); }
     }
 
+    /* AI policy status panel (visible in AI mode) */
+    .ai-status {
+      position: absolute;
+      top: 48px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: rgba(13,17,48,0.85);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(127,77,255,0.3);
+      border-radius: 999px;
+      font-size: 10px;
+      color: var(--text);
+      z-index: 4;
+      white-space: nowrap;
+    }
+    .ai-status.hidden { display: none; }
+    .ai-status .ai-status-label {
+      color: var(--dim);
+      letter-spacing: 0.15em;
+    }
+    .ai-status .ai-policy-name {
+      padding: 2px 8px;
+      background: linear-gradient(135deg, rgba(127,77,255,0.3), rgba(255,77,196,0.3));
+      border: 1px solid rgba(127,77,255,0.55);
+      border-radius: 999px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .ai-status .ai-policy-name:hover {
+      background: linear-gradient(135deg, rgba(127,77,255,0.5), rgba(255,77,196,0.5));
+    }
+    .ai-status .ai-samples,
+    .ai-status .ai-loss {
+      color: var(--dim);
+    }
+    .ai-status .ai-reset {
+      padding: 1px 6px;
+      background: transparent;
+      border: 1px solid rgba(127,77,255,0.3);
+      color: var(--dim);
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 11px;
+      line-height: 1;
+    }
+    .ai-status .ai-reset:hover {
+      color: var(--warn);
+      border-color: var(--warn);
+    }
+
     .diff-tag {
       font-size: 9px;
       letter-spacing: 0.18em;
