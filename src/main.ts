@@ -28,6 +28,9 @@ import { UNLOCK_TRACK } from './config/unlocks.js';
 import { Popups } from './render/popups.js';
 import { AIBot } from './ai/bot.js';
 import { CompositePolicy, MODE_LABEL, type CompositeMode } from './ai/compositePolicy.js';
+import { Stats } from './game/stats.js';
+import { StatsPanel } from './ui/stats.js';
+import { Tutorial } from './ui/tutorial.js';
 import { DailyChallenges } from './game/dailyChallenge.js';
 import { DailyPanel } from './ui/daily.js';
 import { downloadShareCard } from './ui/shareCard.js';
@@ -68,6 +71,13 @@ if (!canvas || !bigBangBtn || !openNebulaBtn || !shareBtn) throw new Error('Requ
 const meta = new Meta();
 const nebula = new NebulaPanel();
 openNebulaBtn.addEventListener('click', () => nebula.show(meta));
+
+const stats = new Stats();
+const statsPanel = new StatsPanel(stats);
+const openStatsBtn = document.getElementById('open-stats') as HTMLButtonElement | null;
+openStatsBtn?.addEventListener('click', () => statsPanel.show());
+
+const tutorial = new Tutorial();
 
 const daily = new DailyChallenges();
 const dailyPanel = new DailyPanel(daily);
