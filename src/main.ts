@@ -502,13 +502,34 @@ function loop(now: number): void {
     // so accumulated impulses from collisions can't drift the body across the top line.
     for (const b of bodies) {
       if (b.tier == null || b.tier < 8 || b.tier >= 11) continue;
-      if (b._anchorY == null) b._anchorY = b.position.y;
-      if (b.position.y > b._anchorY) {
-        // Body drifted down (allowed) — update the anchor to the new resting level.
-        b._anchorY = b.position.y;
-      } else if (b.position.y < b._anchorY) {
-        // Body got pushed up — revert position and kill upward velocity.
-        Matter.Body.setPosition(b, { x: b.position.x, y: b._anchorY });
+      const info = TIERS[b.tier];
+      if (!info) continue;
+
+      // Safety net: if physics glitched the position out of the world (NaN, off-screen),
+      // restore to a safe central spot so the body doesn't vanish.
+      const px = b.position.x;
+      const py = b.position.y;
+      const offWorld =
+        !Number.isFinite(px) ||
+        !Number.isFinite(py) ||
+        py > HEIGHT + 100 ||
+        py < -400 ||
+        px < -150 ||
+        px > WIDTH + 150;
+      if (offWorld) {
+        const safeX = Math.min(Math.max(WIDTH / 2, info.radius + 10), WIDTH - info.radius - 10);
+        const safeY = HEIGHT - info.radius - 10;
+        Matter.Body.setPosition(b, { x: safeX, y: safeY });
+        Matter.Body.setVelocity(b, { x: 0, y: 0 });
+        b._anchorY = safeY;
+        continue;
+      }
+
+      if (b._anchorY == null) b._anchorY = py;
+      if (py > b._anchorY) {
+        b._anchorY = py;
+      } else if (py < b._anchorY) {
+        Matter.Body.setPosition(b, { x: px, y: b._anchorY });
         Matter.Body.setVelocity(b, { x: b.velocity.x * 0.4, y: 0 });
       }
     }
