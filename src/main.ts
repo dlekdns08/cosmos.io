@@ -122,6 +122,9 @@ function beginGame(id: DifficultyId): void {
   syncDifficultyUI();
   state.gameStarted = true;
   startScreenEl?.classList.remove('show');
+  stats.startGame();
+  synth.ensure();
+  if (bgmOn) synth.bgmStart();
 }
 
 for (const card of startCards) {
