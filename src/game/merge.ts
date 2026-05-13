@@ -1,6 +1,6 @@
 import Matter from 'matter-js';
 import { MAX_TIER, tierInfo } from '../config/tiers.js';
-import { makeBody, topLineY, HEIGHT } from '../physics/world.js';
+import { makeBody, topLineY, HEIGHT, WIDTH } from '../physics/world.js';
 
 export interface MergeInfo {
   body: Matter.Body;
@@ -54,10 +54,15 @@ export function setupMerge(engine: Matter.Engine, world: Matter.World, callbacks
         Matter.Body.setVelocity(next, { x: 0, y: 0 });
         const minY = topLineY() + info.radius + 30;
         const maxY = HEIGHT - info.radius - 5;
+        const minX = info.radius + 5;
+        const maxX = WIDTH - info.radius - 5;
         let py = next.position.y;
+        let px = next.position.x;
         if (py < minY) py = minY;
         if (py > maxY) py = maxY;
-        Matter.Body.setPosition(next, { x: next.position.x, y: py });
+        if (px < minX) px = minX;
+        if (px > maxX) px = maxX;
+        Matter.Body.setPosition(next, { x: px, y: py });
       } else {
         Matter.Body.setVelocity(next, { x: vx, y: vy });
       }
