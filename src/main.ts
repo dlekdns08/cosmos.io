@@ -550,6 +550,42 @@ function loop(now: number): void {
         Matter.Body.setVelocity(b, { x: nvx, y: nvy });
       }
     }
+
+    // Manual de-overlap: tier 8+ stars can't share space with lighter bodies.
+    // Matter's iterative position correction often leaves a few px of overlap when a
+    // body is being pulled into the star — push the lighter body out radially and kill
+    // its inward velocity component.
+    for (const star of bodies) {
+      if (star.tier == null || star.tier < 8 || star.tier >= 11) continue;
+      const sr = star.circleRadius;
+      if (!sr) continue;
+      for (const other of bodies) {
+        if (other === star) continue;
+        if (other.tier == null || other.tier >= 8) continue;
+        const or = other.circleRadius;
+        if (!or) continue;
+        const dx = other.position.x - star.position.x;
+        const dy = other.position.y - star.position.y;
+        const d2 = dx * dx + dy * dy;
+        const minD = sr + or;
+        if (d2 >= minD * minD || d2 < 0.0001) continue;
+        const d = Math.sqrt(d2);
+        const overlap = minD - d;
+        const ux = dx / d;
+        const uy = dy / d;
+        Matter.Body.setPosition(other, {
+          x: other.position.x + ux * overlap,
+          y: other.position.y + uy * overlap,
+        });
+        const radialV = other.velocity.x * ux + other.velocity.y * uy;
+        if (radialV < 0) {
+          Matter.Body.setVelocity(other, {
+            x: other.velocity.x - radialV * ux,
+            y: other.velocity.y - radialV * uy,
+          });
+        }
+      }
+    }
     applyGravity(bodies);
     applyOrbitForces(bodies, now);
     applyChargeAttractors(bodies);
