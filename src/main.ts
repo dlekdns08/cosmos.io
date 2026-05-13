@@ -163,6 +163,7 @@ function applyDrift(bodies: Matter.Body[], nowMs: number): void {
 
 const state: GameState = {
   gameStarted: false,
+  aiMode: false,
   gameOver: false,
   topOccupiedTime: 0,
   blackholeActive: false,
