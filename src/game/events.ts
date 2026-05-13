@@ -41,6 +41,9 @@ export function runSupernova(world: Matter.World, supernovaBody: Matter.Body, ca
 
   for (const b of affected) {
     if (b.tier == null) continue;
+    // Tier 8+ (항성/적색거성/초신성) are too valuable and expensive-to-build to teleport via supernova.
+    // Leave them where they are — the explosion only scatters lighter debris.
+    if (b.tier >= 8) continue;
     const bonus = b.tier >= 7 ? 2 : 1;
     const newTier = Math.min(SCATTER_MAX_TIER, b.tier + bonus);
     const info = tierInfo(newTier);
@@ -50,10 +53,9 @@ export function runSupernova(world: Matter.World, supernovaBody: Matter.Body, ca
     Matter.World.remove(world, b);
     const nb = makeBody(nx, ny, info);
     if (newTier >= 8) {
-      // Heavies stay still where supernova places them — same anchor rule as merge/big-bang.
+      // Heavies created via scatter (e.g., tier 7 → tier 9) stay still per the anchor rule.
       Matter.Body.setVelocity(nb, { x: 0, y: 0 });
     } else {
-      // Smaller bodies get a downward-biased nudge so they don't fly above the top line.
       Matter.Body.setVelocity(nb, {
         x: (Math.random() - 0.5) * 10,
         y: Math.random() * 6 + 1,
